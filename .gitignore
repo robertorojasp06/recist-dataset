@@ -172,3 +172,4 @@ cython_debug/
 
 data/
 notebooks/results
+notebooks/resources
