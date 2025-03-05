@@ -113,6 +113,7 @@ def main():
     parser.add_argument(
         '--max_workers',
         type=int,
+        default=8,
         help="Max threads for multithreading."
     )
     args = parser.parse_args()
