@@ -67,10 +67,23 @@ class Preprocessor:
         final_label = ','.join([item.strip() for item in labels_mapping.get(str(mode_value)).split(',')])
         return final_label
 
-    def _get_axial_lengths(self, object_):
-        """Return the max and min diameter lengths.
-        This is the maximum and minimum of all 2d axial slices
-        of the object. """
+    def _get_unified_mask(self, mask, labels_mapping):
+        """Return a labeled mask with all foreground voxels of the same
+        category (lesion label) having the same label value."""
+        unique_labels_mapping = {
+            label_description: value
+            for value, label_description in enumerate(list(set(labels_mapping.values())), start=1)
+        }
+        output_mask = np.zeros(mask.shape).astype(mask.dtype)
+        for label_description, label_value in unique_labels_mapping.items():
+            old_values = [
+                int(old_value)
+                for old_value, old_description in labels_mapping.items()
+                if old_description == label_description
+            ]
+            coords = np.where(np.isin(mask, old_values))
+            output_mask[coords[0], coords[1], coords[2]] = label_value
+        return output_mask
 
     def _preprocess_mask(self, mask):
         """Preprocess input mask. Output mask is labeled by lesion instances,
@@ -97,7 +110,7 @@ class Preprocessor:
             mask_image.GetSpacing()[0]  # column
         )
         labeled, labeled_count = label_objects(
-            mask_array,
+            self._get_unified_mask(mask_array, labels_mapping),
             return_num=True
         )
         props = regionprops(
