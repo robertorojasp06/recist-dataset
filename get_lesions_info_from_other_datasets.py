@@ -165,7 +165,7 @@ def main():
             dataset["lesion_label_value"]
         )
     pd.DataFrame(lesions_info).to_csv(
-        Path(args.path_to_output) / "lesions_info_other_datasets.csv",
+        Path(args.path_to_output) / "other_datasets_lesions_info.csv",
         index=False
     )
 
