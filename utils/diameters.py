@@ -1,7 +1,9 @@
 import numpy as np
+import SimpleITK as sitk
 from skimage.measure import label as label_objects
 from skimage.measure import regionprops
 from typing import Tuple
+from pathlib import Path
 
 
 class DiameterMeasurer:
@@ -61,3 +63,41 @@ class DiameterMeasurer:
             "major_axis_slice_idx": int(major_axis_slice_idx)
         }
         return output
+
+
+def measure_lesions_axes(path_to_mask, min_size=1, label_mask=False):
+    """Return a list with dictionaries, one for each
+    connected component, containing the major and minor
+    axes (major axis is the longest axis of all axial slices).
+    Units are defined by the spacing units informed in the nifti file.
+
+    Parameters:
+    -----------
+    path_to_mask : str
+        Path to the nifti file containing the mask.
+    min_size : int
+        Minimum size, in voxels, of connected components to be measured.
+    label_mask : bool
+        If True, label the mask by connectivity criteria. Else, the
+        input mask is expected to be a labeled array with each integer
+        defining a connected component.
+    """
+    image = sitk.ReadImage(path_to_mask)
+    spacing = image.GetSpacing()
+    spacing = (spacing[2], spacing[1], spacing[0])
+    array = sitk.GetArrayFromImage(image)
+    labeled_image = label_objects(array) if label_mask else array
+    props = [
+        object_
+        for object_ in regionprops(labeled_image, spacing=spacing)
+        if object_.num_pixels >= min_size
+    ]
+    measurer = DiameterMeasurer(spacing=spacing)
+    output = [
+        {
+            "filename": Path(path_to_mask).name,
+            **measurer.compute_diameters(labeled_image, object_)
+        }
+        for object_ in props
+    ]
+    return output
