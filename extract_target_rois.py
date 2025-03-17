@@ -74,7 +74,7 @@ class ROIExtractor:
         self.ellipse_color = (1, 0, 0)
         self.major_axis_color = (1, 0, 0)
         self.minor_axis_color = (0, 0, 1)
-        self.text_position = (12, 12) # (x, y)
+        self.text_position = (12, 16) # (x, y)
         self.text_fontsize = 24
         self.text_fontweight = 'bold'
         self.add_individual_axes = False
