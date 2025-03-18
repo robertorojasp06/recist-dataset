@@ -70,12 +70,12 @@ class ROIExtractor:
     def __init__(self):
         self.roi_shape = (100, 100)
         self.min_countour_len = 10
-        self.contour_color = (0, 1, 0)
+        self.contour_color = (0, 0, 1.0)
         self.ellipse_color = (1, 0, 0)
-        self.major_axis_color = (1, 0, 0)
-        self.minor_axis_color = (0, 0, 1)
+        self.major_axis_color = (1.0, 0.4, 0) # (1.0, 0, 0), (1, 0.4, 0.4)
+        self.minor_axis_color = (1.0, 0, 1.0) # (0, 0, 1.0), (0, 0.8, 1.0)
         self.text_position = (12, 16) # (x, y)
-        self.text_fontsize = 24
+        self.text_fontsize = 30
         self.text_fontweight = 'bold'
         self.add_individual_axes = False
         self.figsize = (5,5)
@@ -134,8 +134,8 @@ class ROIExtractor:
                 diameter_length = object_mm.minor_axis_length if is_adenopathy else object_mm.major_axis_length
                 text_color = self.minor_axis_color if is_adenopathy else self.major_axis_color
                 text = ax.text(
-                    x0 - 10,
-                    y0,
+                    x0 - 7,
+                    y0 - 14,
                     f"{round(diameter_length, ndigits=2)} mm",
                     color=text_color,
                     fontsize=int(0.75 * self.text_fontsize),
