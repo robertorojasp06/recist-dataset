@@ -3,6 +3,8 @@ import argparse
 import unicodedata
 from pathlib import Path
 
+from utils.mappings import DIAGNOSIS_MAPPING
+
 
 def normalize_spanish_string(string):
     # Remove accents and other spanish characters
@@ -15,19 +17,7 @@ def normalize_spanish_string(string):
 
 class PatientsNormalizer:
     def __init__(self):
-        self.diagnoses_mapping = {
-            "melanoma": "melanoma",
-            "cancer mama": "breast cancer",
-            "cancer vejiga": "bladder cancer",
-            "cancer colon": "colon cancer",
-            "cancer gastrico": "gastric cancer",
-            "cancer recto": "rectal cancer",
-            "cancer vesicula biliar": "gallbladder cancer",
-            "cancer ovario": "ovarian cancer",
-            "cancer pulmon": "lung cancer",
-            "cancer higado": "liver cancer",
-            "cancer pancreatobiliar": "pancreatobiliary cancer"
-        }
+        self.diagnoses_mapping = DIAGNOSIS_MAPPING
 
     def _translate_diagnosis(self, diagnosis):
         translated = self.diagnoses_mapping.get(diagnosis, None)
