@@ -76,7 +76,7 @@ def main():
     with open("metadata.json", 'w') as file:
         json.dump(metadata, file, indent=4)
     pd.DataFrame(resolution).to_csv(
-        "resolution.csv",
+        Path(args.path_to_output) / "resolution.csv",
         index=False
     )
 
