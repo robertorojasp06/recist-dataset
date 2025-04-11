@@ -10,6 +10,8 @@ from pathlib import Path
 from scipy.stats import mode
 from tqdm import tqdm
 
+from utils.mappings import LABEL_MAPPING
+
 
 class Preprocessor:
     def __init__(self) -> None:
@@ -17,31 +19,7 @@ class Preprocessor:
         self.min_size_units = "voxels"
         self.min_slices = 2
         self.save_non_accepted = False
-        self.label_mapping = {
-            'm,bazo': 'm,spleen',
-            'm,costilla': 'm,rib',
-            'm,higado': 'm,liver',
-            'm,pancreas': 'm,pancreas',
-            'm,pared abdominal': 'm,abdominal wall',
-            'm,pulmon': 'm,lung',
-            'm,rinon': 'm,kidney',
-            'm,ovario': 'm,ovary',
-            'm,suprarrenal': 'm,suprarenal',
-            'n,abdomen': 'n,abdomen',
-            'n,aortocava': 'n,aortocaval',
-            'n,axila': 'n,axillary',
-            'n,hilio hepatico': 'n,hepatic hilum',
-            'n,iliaca': 'n,iliac',
-            'n,inguinal': 'n,inguinal',
-            'n,mediastino': 'n,mediastinum',
-            'n,mesenterica': 'n,mesenteric',
-            'n,pared abdominal': 'n,abdominal wall',
-            'n,pelvis': 'n,pelvis',
-            'n,periaortica': 'n,periaortic',
-            'n,retroperitoneal': 'n,retroperitoneal',
-            'n,suprarrenal': 'n,suprarenal',
-            't,pulmon': 't,lung'
-        }
+        self.label_mapping = LABEL_MAPPING
 
     @property
     def min_size_units(self):
