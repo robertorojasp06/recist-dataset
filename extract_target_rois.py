@@ -13,40 +13,7 @@ from matplotlib_scalebar.scalebar import ScaleBar
 from tqdm import tqdm
 
 from utils import windowing
-
-
-def overlay_segmentation(image, mask, color=(1, 1, 0), alpha=0.5):
-    """
-    Overlays a binary segmentation mask onto a grayscale image
-    as an RGB image.
-
-    Parameters:
-    -----------
-        image (ndarray): 2D grayscale image.
-        mask (ndarray): 2D binary segmentation mask (same shape as image).
-        color (tuple): RGB color for the mask overlay (default is yellow).
-        alpha (float): Transparency of the mask overlay (0 = transparent, 1 = solid).
-
-    Returns:
-    --------
-        overlay (ndarray): RGB image with segmentation overlay.
-    """
-    # Normalize the grayscale image to [0,1] for proper display
-    image = image.astype(np.float32)
-    image = (image - image.min()) / (image.max() - image.min())
-
-    # Convert grayscale to RGB
-    overlay = np.dstack([image] * 3)  # Shape (H, W, 3)
-
-    # Create a color mask
-    color_mask = np.zeros_like(overlay)
-    for i in range(3):  # Apply color to each channel
-        color_mask[..., i] = color[i]
-
-    # Blend the overlay with the image
-    overlay = np.where(mask[..., None], (1 - alpha) * overlay + alpha * color_mask, overlay)
-
-    return overlay
+from utils.plot import overlay_segmentation
 
 
 def get_targets(path_to_recist_measurements, path_to_train_features,
@@ -145,7 +112,7 @@ class ROIExtractor:
             # Accumulate lengths
             major_axis_sum += object_mm.major_axis_length
             minor_axis_sum += object_mm.minor_axis_length
-        return ax, major_axis_sum, minor_axis_sum, len(objects_mm)
+        return ax, major_axis_sum, minor_axis_sum
 
     def _plot_lesion(self, slice_ct, slice_mask, obj_pixels, lesion_name,
                      filename, pixel_size, add_ellipse=False):
@@ -178,7 +145,7 @@ class ROIExtractor:
             (self.targets_df["lesion_label_alias"] == lesion_name)
         ]["label_description"].item()
         # Draw axes
-        ax, major_diameter, minor_diameter, objects_count = self._add_axes(
+        ax, major_diameter, minor_diameter= self._add_axes(
             ax,
             output_roi,
             output_mask,
