@@ -154,6 +154,10 @@ dependencies:
   - zlib=1.2.13=h5eee18b_0
   - zstd=1.5.5=hc292b87_0
   - pip:
+      - pygments==2.19.1
       - pymupdf==1.23.16
       - pymupdfb==1.23.9
+      - typing-extensions==4.13.2
+      - vedo==2025.5.3
+      - vtk==9.4.2
 prefix: /home/robber/anaconda3/envs/recist-dataset
