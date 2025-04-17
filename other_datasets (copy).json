@@ -1,0 +1,32 @@
+[
+    {
+        "dataset_name": "PET-CT",
+        "path_to_masks": "/media/robber/Nuevo vol1/datasets/fondef-ID23I10337/tcia/FDG-PET-CT-Lesions/manifest-1654187277763/FDG-PET-CT-Lesions-nifti",
+        "lesion_label_value": 1
+    },
+    {
+        "dataset_name": "Task03_Liver",
+        "path_to_masks": "/media/robber/Nuevo vol/msd-data/raw/Task03_Liver/labelsTr",
+        "lesion_label_value": 2
+    },
+    {
+        "dataset_name": "Task06_Lung",
+        "path_to_masks": "/media/robber/Nuevo vol/msd-data/raw/Task06_Lung/labelsTr",
+        "lesion_label_value": 1
+    },
+    {
+        "dataset_name": "Task07_Pancreas",
+        "path_to_masks": "/media/robber/Nuevo vol/msd-data/raw/Task07_Pancreas/labelsTr",
+        "lesion_label_value": 2
+    },
+    {
+        "dataset_name": "Task08_HepaticVessel",
+        "path_to_masks": "/media/robber/Nuevo vol/msd-data/raw/Task08_HepaticVessel/labelsTr",
+        "lesion_label_value": 2
+    },
+    {
+        "dataset_name": "Task10_Colon",
+        "path_to_masks": "/media/robber/Nuevo vol/msd-data/raw/Task10_Colon/labelsTr",
+        "lesion_label_value": 1
+    }
+]

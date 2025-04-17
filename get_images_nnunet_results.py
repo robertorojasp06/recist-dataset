@@ -1,6 +1,7 @@
 import numpy as np
 import SimpleITK as sitk
 import matplotlib.pyplot as plt
+import json
 from pathlib import Path
 from vedo import Volume, Plotter
 from tqdm import tqdm
@@ -144,6 +145,47 @@ class Visualizer:
             )
 
 
+def render_sample(path_to_ct, path_to_gt, path_to_prediction,
+                  path_to_output, params):
+    visualizer = Visualizer(path_to_output)
+    for key, value in params.items():
+        setattr(visualizer, key, value)
+    visualizer.render(
+        path_to_ct,
+        path_to_gt,
+        path_to_prediction
+    )
+
+
+def render_all(path_to_cts, path_to_gts, path_to_predictions,
+               path_to_output, path_to_params):
+    with open(path_to_params, 'r') as file:
+        params_dict = json.load(file)
+    paths_to_gts = sorted(list(Path(path_to_gts).glob('*.nii.gz')))
+    paths_to_predictions = sorted(list(Path(path_to_predictions).glob('*.nii.gz')))
+    paths_to_cts = sorted(
+        [
+            Path(path_to_cts) / f"{path.name.split('.nii.gz')[0]}_0000.nii.gz"
+            for path in paths_to_gts
+        ]
+    )
+    for path_to_ct, path_to_gt, path_to_prediction in tqdm(
+        zip(
+            paths_to_cts,
+            paths_to_gts,
+            paths_to_predictions
+        ),
+        total=len(paths_to_cts)
+    ):
+        tqdm.write(f"ct: {Path(path_to_ct).name}")
+        render_sample(
+            str(path_to_ct),
+            str(path_to_gt),
+            str(path_to_prediction),
+            str(path_to_output)
+        )
+
+
 def test_sample():
     path_to_ct = "/media/cosmo/Data/fondef_ID23I10337/nnUNet/data/raw/Dataset536_HCUCH_FineTuningLung_draft/imagesTs/1.3.12.2.1107.5.1.4.83504.30000021071911510369800019660_0000.nii.gz"
     path_to_gt = "/media/cosmo/Data/fondef_ID23I10337/nnUNet/data/raw/Dataset536_HCUCH_FineTuningLung_draft/labelsTs/1.3.12.2.1107.5.1.4.83504.30000021071911510369800019660.nii.gz"
@@ -158,10 +200,14 @@ def test_sample():
 
 
 def test_all():
-    path_to_cts = "/media/cosmo/Data/fondef_ID23I10337/nnUNet/data/raw/Dataset536_HCUCH_FineTuningLung_draft/imagesTs"
-    path_to_gts = "/media/cosmo/Data/fondef_ID23I10337/nnUNet/data/raw/Dataset536_HCUCH_FineTuningLung_draft/labelsTs"
-    path_to_predictions = "/media/cosmo/Data/fondef_ID23I10337/nnUNet/results/inference/Dataset536_HCUCH_FineTuningLung_draft/best_chk/3d_fullres_lr_0_0001/ensemble"
-    path_to_output = "/home/cosmo/nnunet-renders"
+    # path_to_cts = "/media/cosmo/Data/fondef_ID23I10337/nnUNet/data/raw/Dataset536_HCUCH_FineTuningLung_draft/imagesTs"
+    # path_to_gts = "/media/cosmo/Data/fondef_ID23I10337/nnUNet/data/raw/Dataset536_HCUCH_FineTuningLung_draft/labelsTs"
+    # path_to_predictions = "/media/cosmo/Data/fondef_ID23I10337/nnUNet/results/inference/Dataset536_HCUCH_FineTuningLung_draft/best_chk/3d_fullres_lr_0_0001/ensemble"
+    # path_to_output = "/home/cosmo/nnunet-renders"
+    path_to_cts = "/media/robber/Nuevo vol/nnUNet/data/raw/Dataset536_HCUCH_FineTuningLung_draft/imagesTs"
+    path_to_gts = "/media/robber/Nuevo vol/nnUNet/data/raw/Dataset536_HCUCH_FineTuningLung_draft/labelsTs"
+    path_to_predictions = "/media/robber/Nuevo vol/nnUNet/results/inference/Dataset536_HCUCH_FineTuningLung_draft/best_chk/3d_fullres_lr_0_0001/ensemble"
+    path_to_output = "/home/robber/nnunet-renders"
     visualizer = Visualizer(path_to_output)
     visualizer.render_all(
         path_to_cts,
