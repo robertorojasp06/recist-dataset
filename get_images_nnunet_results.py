@@ -49,7 +49,7 @@ class Visualizer:
             self.path_to_output_gt_overlaid,
             self.path_to_output_prediction_overlaid
         ):
-            Path(path).mkdir(exist_ok=True)
+            Path(path).mkdir(exist_ok=True, parents=True)
         # CT Volume as a mesh
         vol = Volume(path_to_ct)
         vol_mesh = vol.isosurface()
@@ -120,36 +120,14 @@ class Visualizer:
             )
             plotter.close()
 
-    def render_all(self, path_to_cts, path_to_gts, path_to_predictions):
-        paths_to_gts = sorted(list(Path(path_to_gts).glob('*.nii.gz')))
-        paths_to_predictions = sorted(list(Path(path_to_predictions).glob('*.nii.gz')))
-        paths_to_cts = sorted(
-            [
-                Path(path_to_cts) / f"{path.name.split('.nii.gz')[0]}_0000.nii.gz"
-                for path in paths_to_gts
-            ]
-        )
-        for path_to_ct, path_to_gt, path_to_prediction in tqdm(
-            zip(
-                paths_to_cts,
-                paths_to_gts,
-                paths_to_predictions
-            ),
-            total=len(paths_to_cts)
-        ):
-            tqdm.write(f"ct: {Path(path_to_ct).name}")
-            self.render(
-                str(path_to_ct),
-                str(path_to_gt),
-                str(path_to_prediction)
-            )
-
 
 def render_sample(path_to_ct, path_to_gt, path_to_prediction,
                   path_to_output, params):
     visualizer = Visualizer(path_to_output)
-    for key, value in params.items():
-        setattr(visualizer, key, value)
+    if params:
+        for key, value in params.items():
+            if hasattr(visualizer, key):
+                setattr(visualizer, key, value)
     visualizer.render(
         path_to_ct,
         path_to_gt,
@@ -159,8 +137,7 @@ def render_sample(path_to_ct, path_to_gt, path_to_prediction,
 
 def render_all(path_to_cts, path_to_gts, path_to_predictions,
                path_to_output, path_to_params):
-    with open(path_to_params, 'r') as file:
-        params_dict = json.load(file)
+    # Read data
     paths_to_gts = sorted(list(Path(path_to_gts).glob('*.nii.gz')))
     paths_to_predictions = sorted(list(Path(path_to_predictions).glob('*.nii.gz')))
     paths_to_cts = sorted(
@@ -169,6 +146,10 @@ def render_all(path_to_cts, path_to_gts, path_to_predictions,
             for path in paths_to_gts
         ]
     )
+    # Get custom parameters
+    with open(path_to_params, 'r') as file:
+        params_list = json.load(file)
+    # Loop over individual CT images
     for path_to_ct, path_to_gt, path_to_prediction in tqdm(
         zip(
             paths_to_cts,
@@ -178,11 +159,17 @@ def render_all(path_to_cts, path_to_gts, path_to_predictions,
         total=len(paths_to_cts)
     ):
         tqdm.write(f"ct: {Path(path_to_ct).name}")
+        params = [
+            item
+            for item in params_list
+            if item['filename'] == Path(path_to_gt).name
+        ]
         render_sample(
             str(path_to_ct),
             str(path_to_gt),
             str(path_to_prediction),
-            str(path_to_output)
+            str(path_to_output),
+            params[0] if params else None
         )
 
 
@@ -199,25 +186,33 @@ def test_sample():
     )
 
 
-def test_all():
-    # path_to_cts = "/media/cosmo/Data/fondef_ID23I10337/nnUNet/data/raw/Dataset536_HCUCH_FineTuningLung_draft/imagesTs"
-    # path_to_gts = "/media/cosmo/Data/fondef_ID23I10337/nnUNet/data/raw/Dataset536_HCUCH_FineTuningLung_draft/labelsTs"
-    # path_to_predictions = "/media/cosmo/Data/fondef_ID23I10337/nnUNet/results/inference/Dataset536_HCUCH_FineTuningLung_draft/best_chk/3d_fullres_lr_0_0001/ensemble"
-    # path_to_output = "/home/cosmo/nnunet-renders"
-    path_to_cts = "/media/robber/Nuevo vol/nnUNet/data/raw/Dataset536_HCUCH_FineTuningLung_draft/imagesTs"
-    path_to_gts = "/media/robber/Nuevo vol/nnUNet/data/raw/Dataset536_HCUCH_FineTuningLung_draft/labelsTs"
-    path_to_predictions = "/media/robber/Nuevo vol/nnUNet/results/inference/Dataset536_HCUCH_FineTuningLung_draft/best_chk/3d_fullres_lr_0_0001/ensemble"
-    path_to_output = "/home/robber/nnunet-renders"
-    visualizer = Visualizer(path_to_output)
-    visualizer.render_all(
+def test_all(organ='lung'):
+    if organ == 'lung':
+        path_to_cts = "/media/cosmo/Data/fondef_ID23I10337/nnUNet/data/raw/Dataset536_HCUCH_FineTuningLung_draft/imagesTs"
+        path_to_gts = "/media/cosmo/Data/fondef_ID23I10337/nnUNet/data/raw/Dataset536_HCUCH_FineTuningLung_draft/labelsTs"
+        path_to_predictions = "/media/cosmo/Data/fondef_ID23I10337/nnUNet/results/inference/Dataset536_HCUCH_FineTuningLung_draft/best_chk/3d_fullres_lr_0_0001/ensemble"
+        path_to_output = "/home/cosmo/nnunet-renders/lung"
+        # path_to_cts = "/media/robber/Nuevo vol/nnUNet/data/raw/Dataset536_HCUCH_FineTuningLung_draft/imagesTs"
+        # path_to_gts = "/media/robber/Nuevo vol/nnUNet/data/raw/Dataset536_HCUCH_FineTuningLung_draft/labelsTs"
+        # path_to_predictions = "/media/robber/Nuevo vol/nnUNet/results/inference/Dataset536_HCUCH_FineTuningLung_draft/best_chk/3d_fullres_lr_0_0001/ensemble"
+        # path_to_output = "/home/robber/nnunet-renders/lung"
+    elif organ == 'liver':
+        path_to_cts = "/media/cosmo/Data/fondef_ID23I10337/nnUNet/data/raw/Dataset537_HCUCH_FineTuningLiver_draft/imagesTs"
+        path_to_gts = "/media/cosmo/Data/fondef_ID23I10337/nnUNet/data/raw/Dataset537_HCUCH_FineTuningLiver_draft/labelsTs"
+        path_to_predictions = "/media/cosmo/Data/fondef_ID23I10337/nnUNet/results/inference/Dataset537_HCUCH_FineTuningLiver_draft/best_chk/3d_fullres_lr_0_0001/ensemble"
+        path_to_output = "/home/cosmo/nnunet-renders/liver"
+    path_to_json = "nnunet_rendering.json"
+    render_all(
         path_to_cts,
         path_to_gts,
-        path_to_predictions
+        path_to_predictions,
+        path_to_output,
+        path_to_json
     )
 
 
 def main():
-    test_all()
+    test_all(organ='liver')
 
 
 if __name__ == "__main__":
