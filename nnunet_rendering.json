@@ -4,14 +4,97 @@
         "vol_mesh_bbox_xmin_delta": 10,
         "vol_mesh_bbox_xmax_delta": 10,
         "vol_mesh_bbox_zmin_delta": 10,
-        "vol_mesh_bbox_zmax_delta": 0
+        "vol_mesh_bbox_zmax_delta": 0,
+        "slice_idx": 72,
+        "fill_predicted_mask": true,
+        "slice_dilation_iters": 1
     },
     {
         "filename": "1.3.12.2.1107.5.1.4.83504.30000021071911510369800019660.nii.gz",
-        "slice_idx": 100
+        "slice_idx": 92,
+        "fill_predicted_mask": true,
+        "slice_dilation_iters": 1
+    },
+    {
+        "filename": "1.3.12.2.1107.5.1.4.83504.30000023032112314560600032721.nii.gz",
+        "slice_idx": 165,
+        "fill_predicted_mask": true,
+        "slice_dilation_iters": 1
+    },
+    {
+        "filename": "1.3.12.2.1107.5.1.4.83504.30000023072011471461300015769.nii.gz",
+        "slice_idx": 149,
+        "fill_predicted_mask": true,
+        "slice_dilation_iters": 1
     },
     {
         "filename": "1.3.12.2.1107.5.1.4.83885.30000023052212224943100007846.nii.gz",
-        "slice_idx": 100
+        "slice_idx": 150,
+        "fill_predicted_mask": true,
+        "slice_dilation_iters": 1
+    },
+    {
+        "filename": "1.3.12.2.1107.5.1.4.83504.30000021051412400662100001857.nii.gz",
+        "vol_mesh_bbox_xmin_delta": 10,
+        "vol_mesh_bbox_xmax_delta": 10,
+        "vol_mesh_bbox_ymax_delta": 0,
+        "vol_mesh_bbox_zmin_delta": 0,
+        "vol_mesh_bbox_zmax_delta": 0,
+        "vol_mesh_isosurface_value": 65,
+        "interactive": false,
+        "slice_idx": 75,
+        "fill_predicted_mask": true,
+        "slice_dilation_iters": 1
+    },
+    {
+        "filename": "1.3.12.2.1107.5.1.4.83504.30000021061014315422700023041.nii.gz",
+        "vol_mesh_bbox_xmin_delta": 10,
+        "vol_mesh_bbox_xmax_delta": 10,
+        "vol_mesh_bbox_ymin_delta": 50,
+        "vol_mesh_bbox_ymax_delta": 0,
+        "vol_mesh_bbox_zmin_delta": 0,
+        "vol_mesh_bbox_zmax_delta": 200,
+        "interactive": false,
+        "vol_mesh_isosurface_value": 175,
+        "slice_idx": 174,
+        "fill_predicted_mask": true,
+        "slice_dilation_iters": 1
+    },
+    {
+        "filename": "1.3.12.2.1107.5.1.4.83504.30000021071911510369800020299.nii.gz",
+        "vol_mesh_bbox_xmin_delta": 10,
+        "vol_mesh_bbox_xmax_delta": 10,
+        "vol_mesh_bbox_ymax_delta": 0,
+        "vol_mesh_bbox_zmin_delta": 0,
+        "vol_mesh_bbox_zmax_delta": 150,
+        "vol_mesh_isosurface_value": 175,
+        "slice_idx": 159,
+        "fill_predicted_mask": true,
+        "slice_dilation_iters": 1
+    },
+    {
+        "filename": "1.3.12.2.1107.5.1.4.83504.30000021081905213109000029485.nii.gz",
+        "vol_mesh_bbox_xmin_delta": 10,
+        "vol_mesh_bbox_xmax_delta": 10,
+        "vol_mesh_bbox_ymax_delta": 0,
+        "vol_mesh_bbox_zmin_delta": 0,
+        "vol_mesh_bbox_zmax_delta": 150,
+        "vol_mesh_isosurface_value": 175,
+        "slice_idx": 163,
+        "fill_predicted_mask": true,
+        "slice_dilation_iters": 1
+    },
+    {
+        "filename": "1.3.12.2.1107.5.1.4.83504.30000021102112360685900001538.nii.gz",
+        "vol_mesh_bbox_xmin_delta": 10,
+        "vol_mesh_bbox_xmax_delta": 10,
+        "vol_mesh_bbox_ymax_delta": 0,
+        "vol_mesh_bbox_zmin_delta": 0,
+        "vol_mesh_bbox_zmax_delta": 150,
+        "interactive": false,
+        "vol_mesh_isosurface_value": 175,
+        "slice_idx": 159,
+        "fill_predicted_mask": true,
+        "slice_dilation_iters": 1
     }
 ]

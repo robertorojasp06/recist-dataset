@@ -2,9 +2,15 @@ import numpy as np
 import SimpleITK as sitk
 import matplotlib.pyplot as plt
 import json
+import argparse
 from pathlib import Path
 from vedo import Volume, Plotter
 from tqdm import tqdm
+from skimage.measure import find_contours
+from scipy.ndimage import binary_dilation
+from matplotlib_scalebar.scalebar import ScaleBar
+
+from utils.plot import overlay_masks
 
 
 class Visualizer:
@@ -19,8 +25,9 @@ class Visualizer:
         self.vol_mesh_bbox_ymax_delta = 70
         self.vol_mesh_bbox_zmin_delta = 20
         self.vol_mesh_bbox_zmax_delta = 20
+        self.vol_mesh_isosurface_value = None
         self.mask_mesh_color_gt = 'red'
-        self.mask_mesh_color_prediction = 'yellow'
+        self.mask_mesh_color_prediction = 'gold'
         self.mask_mesh_alpha = 0.95
         self.mask_mesh_lighting = 'plastic'
         self.mask_mesh_smooth_niter = 15
@@ -30,6 +37,20 @@ class Visualizer:
         self.screenshot_scale = 2
         self.background_color = 'black'
         self.interactive = False
+        self.axes = 0
+        self.window_level = None
+        self.window_width = None
+        self.azimuth = 0
+        self.elevation = 90
+        self.roll = 0
+        self.slice_figsize = (8, 8)
+        self.slice_dpi = 300
+        self.slice_prediction_color = (255 / 255, 215 / 255, 0)
+        self.slice_gt_color = (1, 0, 0)
+        self.slice_alpha = 0.5
+        self.slice_dilation_iters = None
+        self.slice_add_scalebar = True
+        self.slice_scalebar_fontsize = 60
 
     @property
     def path_to_output_vols(self):
@@ -43,6 +64,10 @@ class Visualizer:
     def path_to_output_prediction_overlaid(self):
         return Path(self.path_to_output) / "ct-prediction-overlaid"
 
+    @property
+    def path_to_output_slice_overlaid(self):
+        return Path(self.path_to_output) / "slice-all-overlaid"
+
     def render(self, path_to_ct, path_to_gt_mask, path_to_prediction_mask):
         for path in (
             self.path_to_output_vols,
@@ -52,7 +77,8 @@ class Visualizer:
             Path(path).mkdir(exist_ok=True, parents=True)
         # CT Volume as a mesh
         vol = Volume(path_to_ct)
-        vol_mesh = vol.isosurface()
+        vol_mesh = vol.isosurface(self.vol_mesh_isosurface_value)
+        vol_mesh.smooth(niter=50)
         vol_mesh.c(self.vol_mesh_color).alpha(self.vol_mesh_alpha).lighting(self.vol_mesh_lighting)
         # Shrink the bounding box a bit
         xmin, xmax, ymin, ymax, zmin, zmax = vol_mesh.bounds()
@@ -88,8 +114,10 @@ class Visualizer:
             )
         # Define common rendering parameters
         cam = {
-            "elevation": 90,
-            "axes": 0,
+            "elevation": self.elevation,
+            "azimuth": self.azimuth,
+            "roll": self.roll,
+            "axes": self.axes,
             "zoom": True,
             "size": self.output_image_size,
             "interactive": self.interactive
@@ -120,19 +148,103 @@ class Visualizer:
             )
             plotter.close()
 
+    def plot_slice(self, path_to_ct, path_to_gt_mask,
+                   path_to_prediction_mask, slice_idx,
+                   fill_gt_mask=False, fill_predicted_mask=False):
+        ct_image = sitk.ReadImage(path_to_ct)
+        ct_array = sitk.GetArrayFromImage(ct_image)[slice_idx]
+        gt_mask = sitk.GetArrayFromImage(sitk.ReadImage(path_to_gt_mask))[slice_idx]
+        predicted_mask = sitk.GetArrayFromImage(sitk.ReadImage(path_to_prediction_mask))[slice_idx]
+        # Get contour masks
+        if not fill_gt_mask:
+            gt_contours = find_contours(gt_mask > 0)
+            gt_mask = np.zeros_like(gt_mask)
+            for contour in gt_contours:
+                gt_mask[contour[:, 0].astype('int'), contour[:, 1].astype('int')] = True
+            if self.slice_dilation_iters:
+                gt_mask = binary_dilation(
+                    gt_mask,
+                    iterations=self.slice_dilation_iters
+                )
+        else:
+            gt_mask = gt_mask.astype('bool')
+        if not fill_predicted_mask:
+            predicted_contours = find_contours(predicted_mask > 0)
+            predicted_mask = np.zeros_like(predicted_mask)
+            for contour in predicted_contours:
+                predicted_mask[contour[:, 0].astype('int'), contour[:, 1].astype('int')] = True
+            if self.slice_dilation_iters:
+                predicted_mask = binary_dilation(
+                    predicted_mask,
+                    iterations=self.slice_dilation_iters
+                )
+        else:
+            predicted_mask = predicted_mask.astype('bool')
+        # Plot slice with overlaid mask
+        overlay = overlay_masks(
+            ct_array,
+            predicted_mask,
+            gt_mask,
+            predicted_color=self.slice_prediction_color,
+            gt_color=self.slice_gt_color,
+            alpha=self.slice_alpha
+        )
+        fig, ax = plt.subplots(figsize=self.slice_figsize)
+        ax.imshow(overlay)
+        ax.set_axis_off()
+        fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
+        self.path_to_output_slice_overlaid.mkdir(
+            exist_ok=True,
+            parents=True
+        )
+        # Draw scalebar
+        scalebar = ScaleBar(
+            ct_image.GetSpacing()[1],
+            units="mm",
+            fixed_value=10,
+            fixed_units="cm",
+            location='lower center',
+            box_alpha=1,
+            box_color='black',
+            font_properties={"size": self.slice_scalebar_fontsize},
+            color='white'
+        )
+        ax.add_artist(scalebar)
+        fig.savefig(
+            self.path_to_output_slice_overlaid / f"{Path(path_to_ct).name.split('.nii.gz')[0]}.png",
+            transparent=True,
+            dpi=self.slice_dpi
+        )
+        plt.close(fig)
+
 
 def render_sample(path_to_ct, path_to_gt, path_to_prediction,
                   path_to_output, params):
     visualizer = Visualizer(path_to_output)
+    slice_idx = None
+    fill_gt_mask = False
+    fill_predicted_mask = False
     if params:
         for key, value in params.items():
             if hasattr(visualizer, key):
                 setattr(visualizer, key, value)
+        slice_idx = params.get("slice_idx", slice_idx)
+        fill_gt_mask = params.get("fill_mask", fill_gt_mask)
+        fill_predicted_mask = params.get("fill_predicted_mask", fill_predicted_mask)
     visualizer.render(
         path_to_ct,
         path_to_gt,
         path_to_prediction
     )
+    if slice_idx:
+        visualizer.plot_slice(
+            path_to_ct,
+            path_to_gt,
+            path_to_prediction,
+            slice_idx,
+            fill_gt_mask=fill_gt_mask,
+            fill_predicted_mask=fill_predicted_mask
+        )
 
 
 def render_all(path_to_cts, path_to_gts, path_to_predictions,
@@ -173,46 +285,61 @@ def render_all(path_to_cts, path_to_gts, path_to_predictions,
         )
 
 
-def test_sample():
-    path_to_ct = "/media/cosmo/Data/fondef_ID23I10337/nnUNet/data/raw/Dataset536_HCUCH_FineTuningLung_draft/imagesTs/1.3.12.2.1107.5.1.4.83504.30000021071911510369800019660_0000.nii.gz"
-    path_to_gt = "/media/cosmo/Data/fondef_ID23I10337/nnUNet/data/raw/Dataset536_HCUCH_FineTuningLung_draft/labelsTs/1.3.12.2.1107.5.1.4.83504.30000021071911510369800019660.nii.gz"
-    path_to_prediction = "/media/cosmo/Data/fondef_ID23I10337/nnUNet/results/inference/Dataset536_HCUCH_FineTuningLung_draft/best_chk/3d_fullres_lr_0_0001/ensemble/1.3.12.2.1107.5.1.4.83504.30000021071911510369800019660.nii.gz"
-    path_to_output = "/home/cosmo/nnunet-renders"
-    visualizer = Visualizer(path_to_output)
-    visualizer.render(
-        path_to_ct,
-        path_to_gt,
-        path_to_prediction
-    )
-
-
-def test_all(organ='lung'):
-    if organ == 'lung':
-        path_to_cts = "/media/cosmo/Data/fondef_ID23I10337/nnUNet/data/raw/Dataset536_HCUCH_FineTuningLung_draft/imagesTs"
-        path_to_gts = "/media/cosmo/Data/fondef_ID23I10337/nnUNet/data/raw/Dataset536_HCUCH_FineTuningLung_draft/labelsTs"
-        path_to_predictions = "/media/cosmo/Data/fondef_ID23I10337/nnUNet/results/inference/Dataset536_HCUCH_FineTuningLung_draft/best_chk/3d_fullres_lr_0_0001/ensemble"
-        path_to_output = "/home/cosmo/nnunet-renders/lung"
-        # path_to_cts = "/media/robber/Nuevo vol/nnUNet/data/raw/Dataset536_HCUCH_FineTuningLung_draft/imagesTs"
-        # path_to_gts = "/media/robber/Nuevo vol/nnUNet/data/raw/Dataset536_HCUCH_FineTuningLung_draft/labelsTs"
-        # path_to_predictions = "/media/robber/Nuevo vol/nnUNet/results/inference/Dataset536_HCUCH_FineTuningLung_draft/best_chk/3d_fullres_lr_0_0001/ensemble"
-        # path_to_output = "/home/robber/nnunet-renders/lung"
-    elif organ == 'liver':
-        path_to_cts = "/media/cosmo/Data/fondef_ID23I10337/nnUNet/data/raw/Dataset537_HCUCH_FineTuningLiver_draft/imagesTs"
-        path_to_gts = "/media/cosmo/Data/fondef_ID23I10337/nnUNet/data/raw/Dataset537_HCUCH_FineTuningLiver_draft/labelsTs"
-        path_to_predictions = "/media/cosmo/Data/fondef_ID23I10337/nnUNet/results/inference/Dataset537_HCUCH_FineTuningLiver_draft/best_chk/3d_fullres_lr_0_0001/ensemble"
-        path_to_output = "/home/cosmo/nnunet-renders/liver"
-    path_to_json = "nnunet_rendering.json"
-    render_all(
-        path_to_cts,
-        path_to_gts,
-        path_to_predictions,
-        path_to_output,
-        path_to_json
-    )
-
-
 def main():
-    test_all(organ='liver')
+    parser = argparse.ArgumentParser(
+        description="""Get images of segmentations obtained by the nnUNet.
+        Images are 3d renderings of the CT, overlaid with the ground
+        truth and predicted masks. Besides, includes a comparison
+        of ground truth and predicted mask for an specified axial
+        slice.""",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+    parser.add_argument(
+        'path_to_cts',
+        type=str,
+        help="""Path to the directory containing the CT images in nifti
+        format (.nii.gz)."""
+    )
+    parser.add_argument(
+        'path_to_gts',
+        type=str,
+        help="""Path to the directory containing the ground truth
+        segmentation masks in nifti format (.nii.gz)."""
+    )
+    parser.add_argument(
+        'path_to_predictions',
+        type=str,
+        help="""Path to the directory containing the predicted
+        segmentation masks in nifti format (.nii.gz)."""
+    )
+    parser.add_argument(
+        'path_to_output',
+        type=str,
+        help="Path to the output directory."
+    )
+    parser.add_argument(
+        '--path_to_json',
+        type=str,
+        default="nnunet_rendering.json",
+        help="""Path to the JSON file containing custom parameters
+        for each filename. The filename must match the filename of the
+        ground truth nifti file. All attritutes of the Visualizer class
+        are customizable. Besides, you can specify:
+            'slice_idx' (int): axial slice of the CT with a comparison of
+            the ground truth and the predicted mask,
+            'fill_predicted_mask' (bool): set to True to fill predicted
+            mask in the extracted axial slice (only countour by default),
+            'fill_gt_mask' (bool): set to True to fill ground truth mask
+            in the extracted axial slice (only countour by default)."""
+    )
+    args = parser.parse_args()
+    render_all(
+        args.path_to_cts,
+        args.path_to_gts,
+        args.path_to_predictions,
+        args.path_to_output,
+        args.path_to_json
+    )
 
 
 if __name__ == "__main__":
