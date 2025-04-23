@@ -45,8 +45,8 @@ class PatientsNormalizer:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="""Normalize patients.csv file. Especifically,
-        translate diagnoses from spanish to english.""",
+        description="""Translate raw patients.csv file from spanish
+        to english (column headers, diagnoses, etc.).""",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     parser.add_argument(
