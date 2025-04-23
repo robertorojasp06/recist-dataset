@@ -40,7 +40,7 @@
         "vol_mesh_bbox_ymax_delta": 0,
         "vol_mesh_bbox_zmin_delta": 0,
         "vol_mesh_bbox_zmax_delta": 0,
-        "vol_mesh_isosurface_value": 65,
+        "vol_mesh_isosurface_value": 195,
         "interactive": false,
         "slice_idx": 75,
         "fill_predicted_mask": true,

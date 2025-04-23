@@ -26,8 +26,8 @@ class Visualizer:
         self.vol_mesh_bbox_zmin_delta = 20
         self.vol_mesh_bbox_zmax_delta = 20
         self.vol_mesh_isosurface_value = None
-        self.mask_mesh_color_gt = 'red'
-        self.mask_mesh_color_prediction = 'gold'
+        self.mask_mesh_color_gt = (1, 0, 0) # (1, 0, 0), (0.1, 0.52, 1.0)
+        self.mask_mesh_color_prediction = (255/255, 215/255, 0/255) # (1.0, 0.84, 0), (0.83, 0.07, 0.35)
         self.mask_mesh_alpha = 0.95
         self.mask_mesh_lighting = 'plastic'
         self.mask_mesh_smooth_niter = 15
@@ -45,8 +45,8 @@ class Visualizer:
         self.roll = 0
         self.slice_figsize = (8, 8)
         self.slice_dpi = 300
-        self.slice_prediction_color = (255 / 255, 215 / 255, 0)
-        self.slice_gt_color = (1, 0, 0)
+        self.slice_prediction_color = self.mask_mesh_color_prediction
+        self.slice_gt_color = self.mask_mesh_color_gt
         self.slice_alpha = 0.5
         self.slice_dilation_iters = None
         self.slice_add_scalebar = True
@@ -219,8 +219,15 @@ class Visualizer:
 
 
 def render_sample(path_to_ct, path_to_gt, path_to_prediction,
-                  path_to_output, params):
+                  path_to_output, params,
+                  gt_color=None, prediction_color=None):
     visualizer = Visualizer(path_to_output)
+    if gt_color:
+        visualizer.mask_mesh_color_gt = gt_color
+        visualizer.slice_gt_color = gt_color
+    if prediction_color:
+        visualizer.mask_mesh_color_prediction = prediction_color
+        visualizer.slice_prediction_color = prediction_color
     slice_idx = None
     fill_gt_mask = False
     fill_predicted_mask = False
@@ -248,7 +255,8 @@ def render_sample(path_to_ct, path_to_gt, path_to_prediction,
 
 
 def render_all(path_to_cts, path_to_gts, path_to_predictions,
-               path_to_output, path_to_params):
+               path_to_output, path_to_params,
+               gt_color=None, prediction_color=None):
     # Read data
     paths_to_gts = sorted(list(Path(path_to_gts).glob('*.nii.gz')))
     paths_to_predictions = sorted(list(Path(path_to_predictions).glob('*.nii.gz')))
@@ -281,8 +289,20 @@ def render_all(path_to_cts, path_to_gts, path_to_predictions,
             str(path_to_gt),
             str(path_to_prediction),
             str(path_to_output),
-            params[0] if params else None
+            params[0] if params else None,
+            gt_color,
+            prediction_color
         )
+
+
+def rgb_tuple(s):
+    try:
+        parts = tuple(map(float, [item.strip() for item in s.split(',')]))
+        if len(parts) != 3:
+            raise ValueError
+        return parts
+    except ValueError:
+        raise argparse.ArgumentTypeError("RGB value must be in the format R,G,B with three integers")
 
 
 def main():
@@ -332,13 +352,29 @@ def main():
             'fill_gt_mask' (bool): set to True to fill ground truth mask
             in the extracted axial slice (only countour by default)."""
     )
+    parser.add_argument(
+        '--gt_color',
+        type=rgb_tuple,
+        default='1,0,0',
+        help="""Color for the ground truth mask expressed as 'R,G,B' with
+        each value in the range [0,1]. Examples: blue-like (0.1,0.52,1.0)."""
+    )
+    parser.add_argument(
+        '--prediction_color',
+        type=rgb_tuple,
+        default='1.0,0.84,0',
+        help="""Color for the prediction mask expressed as 'R,G,B' with
+        each value in the range [0,1]. Examples: magenta-like (0.83,0.07,0.35)."""
+    )
     args = parser.parse_args()
     render_all(
         args.path_to_cts,
         args.path_to_gts,
         args.path_to_predictions,
         args.path_to_output,
-        args.path_to_json
+        args.path_to_json,
+        gt_color=args.gt_color,
+        prediction_color=args.prediction_color
     )
 
 
