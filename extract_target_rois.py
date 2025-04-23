@@ -276,7 +276,7 @@ class ROIExtractor:
 
 def main():
     parser = argparse.ArgumentParser(
-         description= """Extract ROIs centered on a slice of the target ROIs.
+         description= """Extract 2D ROIs centered on the target lesions.
          Save them as png with the overlaid measurements of the axes
          (diameter length).\nIMPORTANT: Slight differences in the displayed
          diameters lengths will exist (respect to the diameters computed

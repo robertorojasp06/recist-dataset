@@ -64,8 +64,9 @@ def main():
         window for windowing normalization."""
     )
     parser.add_argument(
-        'path_to_output',
+        '--path_to_output',
         type=str,
+        default=Path.cwd(),
         help="Path to the output directory."
     )
     args = parser.parse_args()
