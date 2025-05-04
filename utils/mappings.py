@@ -40,3 +40,10 @@ DIAGNOSIS_MAPPING = {
     "cancer higado": "liver cancer",
     "cancer pancreatobiliar": "pancreatobiliary cancer"
 }
+
+
+INSURANCE_MAPPING = {
+    "sin prevision": "uninsured",
+    "fonasa": "public",
+    "consalud": "private"
+}

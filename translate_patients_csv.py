@@ -4,6 +4,7 @@ import unicodedata
 from pathlib import Path
 
 from utils.mappings import DIAGNOSIS_MAPPING
+from utils.mappings import INSURANCE_MAPPING
 
 
 def normalize_spanish_string(string):
@@ -18,11 +19,18 @@ def normalize_spanish_string(string):
 class PatientsNormalizer:
     def __init__(self):
         self.diagnoses_mapping = DIAGNOSIS_MAPPING
+        self.insurance_mapping = INSURANCE_MAPPING
 
     def _translate_diagnosis(self, diagnosis):
         translated = self.diagnoses_mapping.get(diagnosis, None)
         if not translated:
             raise ValueError(f"diagnosis '{diagnosis}' is not in the mapping.")
+        return translated
+
+    def _translate_insurance(self, insurance):
+        translated = self.insurance_mapping.get(insurance, None)
+        if not translated:
+            raise ValueError(f"health insurance '{insurance}' is not in the mapping.")
         return translated
 
     def normalize_patients(self, path_to_patients):
@@ -33,13 +41,17 @@ class PatientsNormalizer:
                 "protocolo": "protocol",
                 "sexo": "sex",
                 "edad": "age",
-                "diagnóstico": "diagnosis"
+                "diagnóstico": "diagnosis",
+                "previsión": "health_insurance"
             },
             inplace=True
         )
         # Translate diagnoses to english
         patients_df["diagnosis"] = patients_df["diagnosis"].apply(normalize_spanish_string)
         patients_df["diagnosis"] = patients_df["diagnosis"].apply(self._translate_diagnosis)
+        # Translate health insurance to english
+        patients_df["health_insurance"] = patients_df["health_insurance"].apply(normalize_spanish_string)
+        patients_df["health_insurance"] = patients_df["health_insurance"].apply(self._translate_insurance)
         return patients_df
 
 
