@@ -1,10 +1,8 @@
 name: recist-dataset
 channels:
   - simpleitk
-  - defaults
   - conda-forge
-  - https://repo.anaconda.com/pkgs/main
-  - https://repo.anaconda.com/pkgs/r
+  - defaults
 dependencies:
   - _libgcc_mutex=0.1=main
   - _openmp_mutex=5.1=1_gnu
@@ -27,7 +25,7 @@ dependencies:
   - bzip2=1.0.8=h7b6447c_0
   - c-ares=1.19.1=h5eee18b_0
   - ca-certificates=2025.4.26=hbd8a1cb_0
-  - certifi=2025.1.31=py310h06a4308_0
+  - certifi=2025.4.26=pyhd8ed1ab_0
   - cffi=1.16.0=py310h5eee18b_0
   - cfitsio=3.470=h5893167_7
   - charls=2.2.0=h2531618_0
@@ -179,6 +177,7 @@ dependencies:
   - ptyprocess=0.7.0=pyhd3eb1b0_2
   - pure_eval=0.2.2=pyhd3eb1b0_0
   - pycparser=2.21=pyhd3eb1b0_0
+  - pydicom=3.0.1=pyhd8ed1ab_2
   - pygments=2.19.1=py310h06a4308_0
   - pyopenssl=23.2.0=py310h06a4308_0
   - pyparsing=3.2.0=py310h06a4308_0
@@ -252,4 +251,4 @@ dependencies:
       - typing-extensions==4.13.2
       - vedo==2025.5.3
       - vtk==9.4.2
-prefix: /home/robber/miniconda3/envs/recist-dataset
+prefix: /home/robber/anaconda3/envs/recist-dataset
