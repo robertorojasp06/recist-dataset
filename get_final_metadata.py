@@ -2,7 +2,29 @@ import argparse
 import json
 import pandas as pd
 import argparse
+import SimpleITK as sitk
 from pathlib import Path
+from tqdm import tqdm
+
+
+DROP_FROM_PATIENTS = [
+    'patient_code',
+    'first_study_uuid',
+    'first_study_accession_number',
+    'protocol'
+]
+DROP_FROM_SERIES = [
+    'status',
+    'study_time',
+    'patient_code'
+]
+
+
+def remove_keys(d, keys):
+    new_d = dict(d)
+    for key in keys:
+        del new_d[key]
+    return new_d
 
 
 def get_final_files_df(path_to_train_ct, path_to_test_ct):
@@ -24,6 +46,22 @@ def get_final_files_df(path_to_train_ct, path_to_test_ct):
     final_files_df = pd.DataFrame(final_files)
     assert len(final_files) == len(final_files_df["uuid"].unique().tolist()), "Some nifti files share the filaname."
     return final_files_df
+
+
+def get_slice_spacings(path_to_train_ct, path_to_test_ct):
+    paths_to_nifti = (
+        list(Path(path_to_train_ct).glob('*.nii.gz')) +
+        list(Path(path_to_test_ct).glob('*.nii.gz'))
+    )
+    slice_spacings = {}
+    for path in tqdm(paths_to_nifti):
+        image = sitk.ReadImage(path)
+        slice_spacings.update(
+            {
+                f"{path.name.split('.nii.gz')[0]}": float(image.GetMetaData("pixdim[3]"))
+            }
+        )
+    return slice_spacings
 
 
 def main():
@@ -115,6 +153,21 @@ def main():
     final_patients_ids = final_series_df["patient_id"].unique().tolist()
     raw_patients_df = pd.read_csv(args.path_to_patients)
     final_patients_df = raw_patients_df[raw_patients_df['patient_id'].isin(final_patients_ids)]
+    # Remove unnecessary columns from patients
+    final_patients_df = final_patients_df.drop(columns=DROP_FROM_PATIENTS)
+    # Remove unnecessary fields from series and add slice spacing
+    slice_spacings = get_slice_spacings(
+        args.path_to_train_ct,
+        args.path_to_test_ct
+    )
+    print(slice_spacings)
+    final_series = [
+        {
+            **remove_keys(item, DROP_FROM_SERIES),
+            "slice_spacing": slice_spacings.get(item["uuid"])
+        }
+        for item in final_series
+    ]
     # Save final metadata
     print(f"Final images: {len(final_files_df)}")
     print(f"Final images with JSON metadata: {len(final_series_df)}")
