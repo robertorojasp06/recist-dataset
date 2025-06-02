@@ -3,6 +3,7 @@ import json
 import pandas as pd
 import argparse
 import SimpleITK as sitk
+import concurrent.futures
 from pathlib import Path
 from tqdm import tqdm
 
@@ -16,7 +17,9 @@ DROP_FROM_PATIENTS = [
 DROP_FROM_SERIES = [
     'status',
     'study_time',
-    'patient_code'
+    'patient_code',
+    'orthanc_uuid',
+    'study_id'
 ]
 
 
@@ -48,20 +51,53 @@ def get_final_files_df(path_to_train_ct, path_to_test_ct):
     return final_files_df
 
 
+def get_slice_spacings_helper(path):
+    image = sitk.ReadImage(path)
+    slice_spacing = {
+        f"{path.name.split('.nii.gz')[0]}": float(image.GetMetaData("pixdim[3]"))
+    }
+    return slice_spacing
+
+
 def get_slice_spacings(path_to_train_ct, path_to_test_ct):
     paths_to_nifti = (
         list(Path(path_to_train_ct).glob('*.nii.gz')) +
         list(Path(path_to_test_ct).glob('*.nii.gz'))
     )
-    slice_spacings = {}
-    for path in tqdm(paths_to_nifti):
-        image = sitk.ReadImage(path)
-        slice_spacings.update(
-            {
-                f"{path.name.split('.nii.gz')[0]}": float(image.GetMetaData("pixdim[3]"))
-            }
-        )
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+        slice_spacings = list(tqdm(executor.map(get_slice_spacings_helper, paths_to_nifti), total=len(paths_to_nifti)))
+    # slice_spacings = {
+    #     list(item.keys())[0]: list(item.values())[0]
+    #     for item in slice_spacings
+    # }
+    slice_spacings = {
+        key: value
+        for item in slice_spacings
+        for key, value in item.items()
+    }
     return slice_spacings
+
+
+def map_name(name):
+    result = name.split()[0]
+    if result.lower() == 'portal':
+        region = "abdomen"
+    elif result.lower() == 'torax':
+        region = "thorax"
+    else:
+        raise ValueError(f"unexpected name: {name}")
+    return region
+
+
+def process_recist_measurements(path_to_recist):
+    df = pd.read_csv(path_to_recist)
+    if 'name' in df.columns:
+        df['region'] = df['name'].apply(map_name)
+        df = df.drop(columns='name')
+        cols = df.columns.tolist()
+        cols.insert(6, cols.pop(cols.index('region')))
+        df = df[cols]
+    return df
 
 
 def main():
@@ -100,6 +136,12 @@ def main():
         help="""Path to the 'windows_mapping.json' file containing
         the mapping between each filename and the corresponding
         window for windowing normalization."""
+    )
+    parser.add_argument(
+        '--path_to_recist',
+        type=str,
+        default=None,
+        help="Path to the 'recist_measurements.csv' file"
     )
     parser.add_argument(
         '--path_to_output',
@@ -160,7 +202,6 @@ def main():
         args.path_to_train_ct,
         args.path_to_test_ct
     )
-    print(slice_spacings)
     final_series = [
         {
             **remove_keys(item, DROP_FROM_SERIES),
@@ -168,6 +209,14 @@ def main():
         }
         for item in final_series
     ]
+    series_df = pd.DataFrame(final_series)
+    if 'name' in series_df.columns:
+        series_df['region'] = series_df['name'].apply(map_name)
+        series_df = series_df.drop(columns='name')
+        cols = series_df.columns.tolist()
+        cols.insert(1, cols.pop(cols.index('region')))
+        series_df = series_df[cols]
+        final_series = series_df.to_dict(orient='records')
     # Save final metadata
     print(f"Final images: {len(final_files_df)}")
     print(f"Final images with JSON metadata: {len(final_series_df)}")
@@ -188,6 +237,13 @@ def main():
         Path(args.path_to_output) / "patients.csv",
         index=False
     )
+    # Process RECIST measurements
+    if args.path_to_recist:
+        recist_df = process_recist_measurements(args.path_to_recist)
+        recist_df.to_csv(
+            Path(args.path_to_output) / Path(args.path_to_recist).name,
+            index=False
+        )
 
 
 if __name__ == "__main__":
