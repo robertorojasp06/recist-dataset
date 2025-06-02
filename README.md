@@ -1,86 +1,139 @@
 # recist-dataset
 Description and analysis of a dataset for RECIST protocol.
 
+<figure>
+  <img src="assets/data_examples.png" alt="Data examples" style="max-width:100%; height:auto;">
+  <figcaption style="text-align: justify; max-width: 800px; margin: 0 auto;">
+    <b>Nuclei instance segmentation on microscopy images of Drosophila embryo.</b> First time point frame of a 3D movie of a Drosophila embryo, showing the MIP projection (left) and the corresponding segmentation (right). Each color represents a different cell nuclei. Segmentations were obtained using a methodology based on the U-Net Deep Learning model (<a href="https://doi.org/10.1109/CAI54212.2023.00137">Rojas et al., 2023</a>)
+  </figcaption>
+</figure>
+
+![Lesions in time](assets/lesions_in_time.png)
+
+
 ## Set up the repository
 1. Clone the repository and install the conda environment running `conda env create -f environment.yml`.
 2. Run `conda activate recist-dataset`
 
-## Prepare the data downloaded from TCIA
-1. Download the data from this link (TODO), where you can find the following resources:
-	- `SEG` data corresponds to the segmentation masks in nifti format, and the corresponding JSON files specifying the label for each annotated lesion. Data is splitted in train and test sets following this folder structure:
+## Preparing the Dataset from TCIA
+1. Download the dataset from [this link](TODO), which contains the following resources:
+	- **Segmentation Data (`SEG`):** This folder includes segmentation masks in NIfTI format and corresponding JSON files with the mapping between foreground values and label descriptions for each annotated lesion. The data is split into training and testing sets with the following structure:
+		<pre><code>
+		📁 SEG
+		├── 📁 train
+		│   ├── 📁 labels
+		│   │   ├── 1.3.12.2.1107.5.1.4.83504.30000019041511214045100000719.json
+		│   │   ├── 1.3.12.2.1107.5.1.4.83504.30000019070312170000200010324.json
+		│   │   └── ...
+		│   └── 📁 masks
+		│       ├── 1.3.12.2.1107.5.1.4.83504.30000019041511214045100000719.nii.gz
+		│       ├── 1.3.12.2.1107.5.1.4.83504.30000019070312170000200010324.nii.gz
+		│       └── ...
+		└── 📁 test
+			├── 📁 labels
+			│   ├── 1.3.12.2.1107.5.1.4.83504.30000017121507082014000029608.json
+			│   ├── 1.3.12.2.1107.5.1.4.83504.30000020011313523232500004258.json
+			│   └── ...
+			└── 📁 masks
+				├── 1.3.12.2.1107.5.1.4.83504.30000017121507082014000029608.nii.gz
+				├── 1.3.12.2.1107.5.1.4.83504.30000020011313523232500004258.nii.gz
+				└── ...
+		</code></pre>
+	- **CT Imaging Data(`CT`):** The imaging data consists of volumetric CT series with instances in DICOM format. The folder structure is organized in terms of patients, studies, series, and dicom instances as follows:
+		<pre><code>
+		📁 CT
+		├── 📁 1
+		|   └── 3187796/
+		|	│   ├── 📁 Portal   5.0  I30f  1   iMAR/
+		|	│   │   ├── CT000000.dcm
+		|	│   │   ├── CT000001.dcm
+		|	│   │   └── ...
+		|	│   └── ...
+		|	└── ...
+		├── 📁 2
+		|   └── 3051489/
+		|	│   ├── 📁 Torax Cte  1.5  I70f  2/
+		|	│   │   ├── CT000000.dcm
+		|	│   │   ├── CT000001.dcm
+		|	│   │   └── ...
+		|	│   └── ...
+		|	└── ...
+		└── ...
+		</code></pre>
+	- `recist_measurements.csv`: Contains target lesion measurements following RECIST 1.1, including the corresponding foreground value in the segmentation mask.
+	- `patients.csv`: Demographic and clinical data for each patient.
+	- `series.json`: Metadata for each CT series, including DICOM tags and image dimensions.
+	- `windows_mapping.json`: Maps CT series filenames to their associated window name (e.g., lung, abdomen, mediastinum). The actual window parameters are defined in `utils/windowing.py`. Use the script `normalize_ct_images.py` to apply window normalization to CT NIfTI files.
+
+2. Convert DICOM files into NIfTI using the script `convert_dicom_to_nifti.py`. We suggest to build the following folder structure from the resulting files:
 	<pre><code>
-	📁 SEG
-	├── 📁 train
-	│   ├── 📁 labels
-	│   │   ├── case001.nii.gz
-	│   │   ├── case002.nii.gz
-	│   │   └── ...
-	│   ├── 📁 masks
-	│   │   ├── case001_mask.nii.gz
-	│   │   ├── case002_mask.nii.gz
-	│   │   └── ...
-	├── 📁 test
-	│   ├── 📁 labels
-	│   │   ├── case101.nii.gz
-	│   │   ├── case102.nii.gz
-	│   │   └── ...
-	│   ├── 📁 masks
-	│   │   ├── case101_mask.nii.gz
-	│   │   ├── case102_mask.nii.gz
-	│   │   └── ...
-	</code></pre>
-	- `CT` data corresponds to the CT series in DICOM format. Data is splitted in train and test sets following this folder structure:
-	<pre><code>
-	📁 CT
+	📁 CT-nifti
 	├── 📁 train
 	│   ├── 📁 images
-	│   │   ├── case001.nii.gz
-	│   │   ├── case002.nii.gz
+	│   │   ├── 1.3.12.2.1107.5.1.4.83504.30000019041511214045100000719.json
+	│   │   ├── 1.3.12.2.1107.5.1.4.83504.30000019070312170000200010324.json
 	│   │   └── ...
-	├── 📁 test
-	│   ├── 📁 images
-	│   │   ├── case101.nii.gz
-	│   │   ├── case102.nii.gz
-	│   │   └── ...
-	</code></pre>
-	- `recist_measurements.csv` contains the measurements of the target lesions reported using RECIST 1.1, along with the corresponding foreground label value in the segmentation mask.
-	- `patients.csv` contains demographic and health information of patients.
-	- `series.json` contains DICOM and Orthanc metadata for each CT series.
-	- `windows_mapping.json` contains the mapping between the filenames of CT series and the corresponding window name (lung, abdomen, mediastinum). The actual window parameters can be found in `utils/windowing.py`. Run the `normalize_ct_images.py` script to apply windowing normalization on CT images in nifti format.
+	└── 📁 test
+		├── 📁 images
+		│   ├── 1.3.12.2.1107.5.1.4.83504.30000017121507082014000029608.json
+		│   ├── 1.3.12.2.1107.5.1.4.83504.30000020011313523232500004258.json
+		│   └── ...
+	</code></pre> 
 
 ## Variable Descriptions
-TODO
-### RECIST measurements (`recist_measurements.csv`)
-TODO
 
-### Patient information (`patients.csv`)
+### RECIST measurements (`recist_measurements.csv`)
+Each row corresponds to a target lesion assessed according to RECIST 1.1. The `recist_measurement_mm` column reports the lesion diameter.
+All lesions are segmented, with the `lesion_label_value` indicating the corresponding foreground value in the segmentation mask.
 
 | Variable Name     | Type        | Description                                                  | Example        |
 |-------------------|-------------|--------------------------------------------------------------|----------------|
 | `patient_id`      | Integer     | Pseudonymized identifier of the patient             		 | `1`       	  |
-| `patient_id`      | Integer     | Subset assigned to the patient (`training`, `test`)          | `training`     |
-| `first_study_date`| String      | Date of the first study (baseline) in the format `YYYYMMDD`  | `20190220`     |
-| `sex`             | String 	  | Biological sex of the patient (`M`, `F`)    			     | `F`            |
-| `age`             | Integer     | Age of the patient in years                                  | `57`           |
-| `diagnosis`       | String      | Clinical diagnosis assigned to the patient                   | `Lung Cancer`  |
-| `health_insurance`| String      | Health insurance of the patient (`public`, `private`, `uninsured`) | `public` |
+| `subset`          | String      | Subset assigned to the patient (`training`, `test`)          | `training`     |
+| `study_date`      | String      | Date of the study in the format `YYYYMMDD`  			     | `20190220`     |
+| `study_uuid`      | String      | Study Instance UID, corresponding to DICOM tag (`0020,000D`) | `1.3.51.0.1.1.172.19.3.128.3187796.3187735`|
+| `uuid`            | String      | Series Instance UID, corresponding to DICOM tag (`0020,000E`)| `1.3.12.2.1107.5.1.4.83504.30000023042612315883400041810`|
+| `filename`        | String 	  | Filename of the CT series    			          			 | `1.3.12.2.1107.5.1.4.83504.30000023042612315883400041810.nii.gz`|
+| `region`          | String      | Anatomical region of the CT series (`abdomen`, `thorax`)     | `abdomen`      |
+| `final_3d_objects`| Integer     | Total number of annotated lesions in the CT series           | `14`           |
+| `lesion_label_value`| Integer   | Foreground value assigned to the lesion in the segmentation mask | `1`        |
+| `lesion_label_alias`| String    | Alias used to identify a specific lesion within a patient    | `A`            |
+| `recist_measurement_mm`| Integer| Diameter measurement in millimeters according to RECIST 1.1. For tumors, this is the major axis; for lymph nodes, the minor axis corresponding to the longest axis| `24`            |
+| `study_order`     | String      | Temporal classification of the study (`baseline`, `follow-up-1`, `follow-up-2`, `...`) | `baseline` |
 
-### Series information (`series.json`)
+
+### Patient information (`patients.csv`)
+Each row represents a unique patient.
 
 | Variable Name     | Type        | Description                                                  | Example        |
 |-------------------|-------------|--------------------------------------------------------------|----------------|
-| `id`      		| Integer     | Pseudonymized identifier of the series                       | `1`       	  |
-| `region`          | String      | Anatomical region (`abdomen`, `thorax`)    				     | `thorax`       |
-| `study_id`        | Integer 	  | Pseudonymized identifier of the study    			         | `150`          |
+| `patient_id`      | Integer     | Pseudonymized identifier of the patient             		 | `1`       	  |
+| `subset`          | Integer     | Subset assigned to the patient (`training`, `test`)          | `training`     |
+| `first_study_date`| String      | Date of the first study (baseline) in the format `YYYYMMDD`  | `20190220`     |
+| `sex`             | String 	  | Biological sex of the patient (`M`, `F`)    			     | `F`            |
+| `age`             | Integer     | Age of the patient in years                                  | `57`           |
+| `diagnosis`       | String      | Clinical diagnosis assigned to the patient                   | `lung cancer`  |
+| `histology`       | String      | Histological diagnosis of the patient, using standardized terms from the NCI Thesaurus (NCIt). If empty, it indicates missing or restricted information| `Adenocarcinoma`  |
+| `health_insurance`| String      | Health insurance coverage (`public`, `private`, `uninsured`) | `public` |
+
+### Series information (`series.json`)
+List of dictionaries, where each dictionary corresponds to a CT series.
+
+| Variable Name     | Type        | Description                                                  | Example        |
+|-------------------|-------------|--------------------------------------------------------------|----------------|
+| `id`      		| Integer     | Pseudonymized identifier of the CT series                    | `1`       	  |
+| `region`          | String      | Anatomical region of the CT series (`abdomen`, `thorax`)     | `thorax`       |
+| `uuid`            | String      | Series Instance UID, corresponding to DICOM tag (`0020,000E`)| `1.3.12.2.1107.5.1.4.83504.30000023042612315883400041810`|
+| `study_uuid`      | String      | Study Instance UID, corresponding to DICOM tag (`0020,000D`) | `1.3.51.0.1.1.172.19.3.128.3187796.3187735`|
 | `study_date`      | String      | Date of the study in the format `YYYYMMDD`  			     | `20221012`     |
 | `patient_id`      | Integer     | Pseudonymized identifier of the patient             		 | `10`       	  |
 | `slice_thickness` | Float       | Slice thickness (in `mm`) used during CT acquisition         | `1.5`          |
 | `row_spacing`     | Float       | Voxel size (in `mm`) in the row dimension (Y-axis)           | `0.740234375`  |
 | `column_spacing`  | Float       | Voxel size (in `mm`) in the column dimension (X-axis)        | `0.740234375`  |
 | `slice_spacing`   | Float       | Voxel size (in `mm`) in the slice dimension (Z-axis)         | `1.0`          |
-| `slices`          | Integer     | Slices count         			                             | `340`          |
-| `rows`            | Integer     | Rows count         										     | `512`          |
-| `columns`         | Integer     | Columns count         										 | `512`          |
+| `slices`          | Integer     | Number of slices in the volume							     | `340`          |
+| `rows`            | Integer     | Number of rows per slice         					         | `512`          |
+| `columns`         | Integer     | Number of columns per slice         						 | `512`          |
 
 
 ## Personal Usage
@@ -139,11 +192,12 @@ Create the following folder structure by using the images and masks obtained in 
 	├── 📁 images
 	│   ├── 📁 dicom
 	│   │   ├── 📁 1/
-	│   │   │   ├── 📁 3051489/
-	│   │   │   │   ├── 📁 Portal   5.0  I30f  1/
+	│   │   │   ├── 📁 3187796/
+	│   │   │   │   ├── 📁 Portal   5.0  I30f  1   iMAR/
 	│   │   │   │   │   ├── CT000000.dcm
 	│   │   │   │   │   ├── CT000001.dcm
 	│   │   │   │   │   └── ...
+	│   │   │   |   └── ...
 	│   │   │   └── ...
 	│   │   └── ...
 	│   └── 📁 nifti
@@ -163,7 +217,7 @@ Create the following folder structure by using the images and masks obtained in 
 	│       └── 📁 test
 	│           ├── 📁 images
 	│           ├── 📁 labels
-	│           ├── 📁 masks
+	│           └── 📁 masks
 	├── 📁 metadata
 	│   ├── patients.csv
 	│   ├── series.json
@@ -183,7 +237,7 @@ Some notes:
 
 #### Replace NIfTI CT images
 1. Convert DICOM files of CT series into compressed nifti files using the `convert_dicom_to_nifti.py` script.
-2. TODO
+2. Replace the train and test `images` in the corresponding folders inside `nifti`. **Note:** This is required because for the rest of the community, the NIfTI files can only be obtained from DICOM files.
 
 
 ### Steps to obtain the final data from raw data
@@ -205,14 +259,14 @@ understand the input arguments.
 	│   |   │   ├── case001.json
 	│   |   │   ├── case002.json
 	│   |   │   └── ...
-	│   |   ├── 📁 masks
-	│   |   │   ├── case001.nii.gz
-	│   |   │   ├── case002.nii.gz
-	│   |   │   └── ...
+	│   |   └── 📁 masks
+	│   |       ├── case001.nii.gz
+	│   |       ├── case002.nii.gz
+	│   |       └── ...
 	│   └── 📁 test
 	│       ├── 📁 images
 	│       ├── 📁 labels
-	│       ├── 📁 masks
+	│       └── 📁 masks
 	├── 📁 metadata
 	│   ├── patients.csv
 	│   ├── series.json
