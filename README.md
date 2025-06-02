@@ -1,14 +1,20 @@
 # recist-dataset
-Description and analysis of a dataset for RECIST protocol.
+Description of a dataset for RECIST protocol.
 
 <figure>
   <img src="assets/data_examples.png" alt="Data examples" style="max-width:100%; height:auto;">
   <figcaption style="text-align: justify; max-width: 800px; margin: 0 auto;">
-    <b>Nuclei instance segmentation on microscopy images of Drosophila embryo.</b> First time point frame of a 3D movie of a Drosophila embryo, showing the MIP projection (left) and the corresponding segmentation (right). Each color represents a different cell nuclei. Segmentations were obtained using a methodology based on the U-Net Deep Learning model (<a href="https://doi.org/10.1109/CAI54212.2023.00137">Rojas et al., 2023</a>)
+    <b>Examples of annotated lesions in CT images.</b> Each row corresponds to a series obtained from the same patient and CT study. (a-c) Thorax series. (d-f) Abdomen series. Each column shows a specific view of the same CT image, displaying annotated lesions in color. From left to right: coronal plane, axial plane, and 3d rendering.
   </figcaption>
 </figure>
 
-![Lesions in time](assets/lesions_in_time.png)
+
+<figure>
+  <img src="assets/lesions_in_time.png" alt="Target lesions in time" style="max-width:100%; height:auto;">
+  <figcaption style="text-align: justify; max-width: 800px; margin: 0 auto;">
+    <b>Examples of annotated lesions in CT images.</b> Target lesion evolution over time, with automatically computed diameter lengths. (a) Lung metastasis. (b) Liver metastasis. The left column corresponds to the baseline study, while middle and right columns show subsequent follow-up studies. Major and minor axes are displayed in orange and magenta, respectively. The diameter length in millimeters, corresponding to the major axis in this case, is shown in orange next to the lesion identifier assigned at the patient level.
+  </figcaption>
+</figure>
 
 
 ## Set up the repository
@@ -43,7 +49,7 @@ Description and analysis of a dataset for RECIST protocol.
 		<pre><code>
 		📁 CT
 		├── 📁 1
-		|   └── 3187796/
+		|   ├── 3187796/
 		|	│   ├── 📁 Portal   5.0  I30f  1   iMAR/
 		|	│   │   ├── CT000000.dcm
 		|	│   │   ├── CT000001.dcm
@@ -51,7 +57,7 @@ Description and analysis of a dataset for RECIST protocol.
 		|	│   └── ...
 		|	└── ...
 		├── 📁 2
-		|   └── 3051489/
+		|   ├── 3051489/
 		|	│   ├── 📁 Torax Cte  1.5  I70f  2/
 		|	│   │   ├── CT000000.dcm
 		|	│   │   ├── CT000001.dcm
@@ -69,15 +75,15 @@ Description and analysis of a dataset for RECIST protocol.
 	<pre><code>
 	📁 CT-nifti
 	├── 📁 train
-	│   ├── 📁 images
-	│   │   ├── 1.3.12.2.1107.5.1.4.83504.30000019041511214045100000719.json
-	│   │   ├── 1.3.12.2.1107.5.1.4.83504.30000019070312170000200010324.json
-	│   │   └── ...
+	│   └── 📁 images
+	│       ├── 1.3.12.2.1107.5.1.4.83504.30000019041511214045100000719.json
+	│       ├── 1.3.12.2.1107.5.1.4.83504.30000019070312170000200010324.json
+	│       └── ...
 	└── 📁 test
-		├── 📁 images
-		│   ├── 1.3.12.2.1107.5.1.4.83504.30000017121507082014000029608.json
-		│   ├── 1.3.12.2.1107.5.1.4.83504.30000020011313523232500004258.json
-		│   └── ...
+		└── 📁 images
+		    ├── 1.3.12.2.1107.5.1.4.83504.30000017121507082014000029608.json
+		    ├── 1.3.12.2.1107.5.1.4.83504.30000020011313523232500004258.json
+		    └── ...
 	</code></pre> 
 
 ## Variable Descriptions
@@ -237,7 +243,7 @@ Some notes:
 
 #### Replace NIfTI CT images
 1. Convert DICOM files of CT series into compressed nifti files using the `convert_dicom_to_nifti.py` script.
-2. Replace the train and test `images` in the corresponding folders inside `nifti`. **Note:** This is required because for the rest of the community, the NIfTI files can only be obtained from DICOM files.
+2. Replace the train and test `images` in the corresponding folders inside `nifti`. **Note:** This is required because for the rest of the community, the NIfTI files can only be obtained from the DICOM files.
 
 
 ### Steps to obtain the final data from raw data
