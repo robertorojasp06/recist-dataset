@@ -3,11 +3,11 @@ Description of a dataset for RECIST protocol.
 
 <figure>
   <img src="assets/data_examples.png" alt="Data examples" style="max-width:100%; height:auto;">
-  <figcaption style="text-align: justify; max-width: 800px; margin: 0 auto; margin-bottom: 50px;">
+  <figcaption style="text-align: justify; max-width: 800px; margin: 0 auto;">
     <b>Examples of annotated lesions in CT images.</b> Each row corresponds to a series obtained from the same patient and CT study. (a-c) Thorax series. (d-f) Abdomen series. Each column shows a specific view of the same CT image, displaying annotated lesions in color. From left to right: coronal plane, axial plane, and 3d rendering.
   </figcaption>
 </figure>
-
+<br><br>
 
 <figure>
   <img src="assets/lesions_in_time.png" alt="Target lesions in time" style="max-width:100%; height:auto;">
