@@ -17,6 +17,12 @@ Description of a dataset for RECIST protocol.
 </figure>
 
 
+## How to get started?
+- [Set up the repository](#set-up-the-repository)
+- [Prepare the Dataset from TCIA](#preparing-the-dataset-from-tcia)
+- [Variable descriptions](#variable-descriptions)
+- [Personal usage](#personal-usage)
+
 ## Set up the repository
 1. Clone the repository and install the conda environment running `conda env create -f environment.yml`.
 2. Run `conda activate recist-dataset`
@@ -143,6 +149,7 @@ List of dictionaries, where each dictionary corresponds to a CT series.
 
 
 ## Personal Usage
+Guidelines and scripts to replicate the final data from raw data.
 
 ### Compute statistics
 
