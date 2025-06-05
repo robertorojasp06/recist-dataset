@@ -18,10 +18,17 @@ Description of a dataset for RECIST protocol.
 
 
 ## How to get started?
+For the community:
 - [Set up the repository](#set-up-the-repository)
 - [Prepare the Dataset from TCIA](#preparing-the-dataset-from-tcia)
 - [Variable descriptions](#variable-descriptions)
-- [Personal usage](#personal-usage)
+
+For the contributors/maintainers:
+- [How to get raw data](#how-to-get-raw-data)
+- [How to obtain the final data from raw data](#how-to-obtain-the-final-data-from-raw-data)
+- [Compute statistics](#compute-statistics)
+- [Obtain sample images](#obtain-sample-images)
+- [Additional scripts](#additional-scripts)
 
 ## Set up the repository
 1. Clone the repository and install the conda environment running `conda env create -f environment.yml`.
@@ -148,39 +155,8 @@ List of dictionaries, where each dictionary corresponds to a CT series.
 | `columns`         | Integer     | Number of columns per slice         						 | `512`          |
 
 
-## Personal Usage
-Guidelines and scripts to replicate the final data from raw data.
-
-### Compute statistics
-
-1. Run the other scripts that compute statistics from final dataset:
-	- `get_nifti_metadata.py`: get information about image shape and voxel resolution.
-	- `get_intensity_distributions.py`: get statistics from voxel intensities.
-	- `compute_lesions_features.py`: get some features from individual lesion instances (longest axis, shortest axis, volume, mean intensity in HU).
-
-2. Update all output files used by the jupyter notebooks in the `notebooks` folder.
-
-### Obtain sample images
-
-The following scripts are intended to generate png images of
-the final data or results obtained from experiments for the journal
-submission:
-
-- `extract_target_rois.py`: extract 2D ROIs centered on the target lesions, including the overlaying of diameter lengths. Diameter lengths
-are computed fitting an ellipse.
-- `extract_medsam_rois.py`: extract 2D ROIs of connected components overlaying the expert annotated countours (ground truth) and the contours
-obtained from the MedSAM prediction.
-- `get_images_nnunet_results.py`: extract renderings of the test CT images
-used for automatic liver and lung tumor segmentation using the nnUNet. The
-expert annotated and the predicted masks are also rendered.
-
-### Additional scripts
-
-- `get_lesions_info_from_other_datasets.py`: extract information of the
-lesion instances included in the datasets that were used to train MedSAM.
-- `normalize_ct_images.py`: apply windowing-normalization to CT images. The `windows_mapping.json`
-file is provided to properly normalize each CT image in the final dataset.
-
+## Only for contributors
+Guidelines and scripts to replicate the final data from raw data, and to characterize the dataset.
 
 ### How to get raw data
 
@@ -252,7 +228,7 @@ Some notes:
 	- `windows_mapping.json` is obtained using the `create_windows_mapping.py` from the [FONDEF repository](https://github.com/covasquezv/FONDEF_ID23I10337/tree/dev/hcuch-data).
 
 
-### Steps to obtain the final data from raw data
+### How to obtain the final data from raw data
 
 1. Run the `get_final_metadata.py` script to get the final version of all metadata files.
 2. Convert DICOM (`.dcm`) files of CT series into compressed NIfTI (`.nii.gz`) files using the `convert_dicom_to_nifti.py` script. Make sure to select the final versions of `series.json` and `patients.csv`.
@@ -287,3 +263,33 @@ understand the input arguments. **Note:** You have to run this script separately
 	│   └── windows_mapping.json
 	└── recist_measurements.csv
 	</code></pre>
+
+### Compute statistics
+
+1. Run the other scripts that compute statistics from final dataset:
+	- `get_nifti_metadata.py`: get information about image shape and voxel resolution.
+	- `get_intensity_distributions.py`: get statistics from voxel intensities.
+	- `compute_lesions_features.py`: get some features from individual lesion instances (longest axis, shortest axis, volume, mean intensity in HU).
+
+2. Update all output files used by the jupyter notebooks in the `notebooks` folder.
+
+### Obtain sample images
+
+The following scripts are intended to generate png images of
+the final data or results obtained from experiments for the journal
+submission:
+
+- `extract_target_rois.py`: extract 2D ROIs centered on the target lesions, including the overlaying of diameter lengths. Diameter lengths
+are computed fitting an ellipse.
+- `extract_medsam_rois.py`: extract 2D ROIs of connected components overlaying the expert annotated countours (ground truth) and the contours
+obtained from the MedSAM prediction.
+- `get_images_nnunet_results.py`: extract renderings of the test CT images
+used for automatic liver and lung tumor segmentation using the nnUNet. The
+expert annotated and the predicted masks are also rendered.
+
+### Additional scripts
+
+- `get_lesions_info_from_other_datasets.py`: extract information of the
+lesion instances included in the datasets that were used to train MedSAM.
+- `normalize_ct_images.py`: apply windowing-normalization to CT images. The `windows_mapping.json`
+file is provided to properly normalize each CT image in the final dataset.
