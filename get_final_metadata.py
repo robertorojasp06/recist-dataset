@@ -93,7 +93,7 @@ def process_recist_measurements(path_to_recist):
     df = pd.read_csv(path_to_recist)
     if 'name' in df.columns:
         df['region'] = df['name'].apply(map_name)
-        df = df.drop(columns='name')
+        df = df.drop(columns='name', errors='ignore')
         cols = df.columns.tolist()
         cols.insert(6, cols.pop(cols.index('region')))
         df = df[cols]
@@ -196,7 +196,7 @@ def main():
     raw_patients_df = pd.read_csv(args.path_to_patients)
     final_patients_df = raw_patients_df[raw_patients_df['patient_id'].isin(final_patients_ids)]
     # Remove unnecessary columns from patients
-    final_patients_df = final_patients_df.drop(columns=DROP_FROM_PATIENTS)
+    final_patients_df = final_patients_df.drop(columns=DROP_FROM_PATIENTS, errors='ignore')
     # Remove unnecessary fields from series and add slice spacing
     slice_spacings = get_slice_spacings(
         args.path_to_train_ct,
@@ -212,7 +212,7 @@ def main():
     series_df = pd.DataFrame(final_series)
     if 'name' in series_df.columns:
         series_df['region'] = series_df['name'].apply(map_name)
-        series_df = series_df.drop(columns='name')
+        series_df = series_df.drop(columns='name', errors='ignore')
         cols = series_df.columns.tolist()
         cols.insert(1, cols.pop(cols.index('region')))
         series_df = series_df[cols]
