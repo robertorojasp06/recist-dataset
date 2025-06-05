@@ -191,10 +191,13 @@ file is provided to properly normalize each CT image in the final dataset.
 
 #### Masks
 1. Download the folder with annotations from [this link](https://sasiba.uchile.cl/index.php/apps/files/?dir=/2023_Fondef_ID23I10337/2023_2024_Fondef_ID23I10337_go/2025_Paper/data/source&fileid=23966378).
-2. Open a terminal and go to the Slicer folder.
-3. Get the segmentations and CT images as nifti files:
+2. Extract the content.
+3. Open a terminal and go to the [3D Slicer](https://download-slicer-org.translate.goog/?_x_tr_sl=en&_x_tr_tl=es&_x_tr_hl=es&_x_tr_pto=tc) folder.
+4. Get the segmentations and CT images as nifti files running:
 
-```./Slicer --no-main-window --testing --python-script path_to_script path_to_subset_segmentations path_to_series path_to_output --suffix corrected```
+```./Slicer --no-main-window --testing --python-script path_to_script path_to_train_segmentations path_to_series path_to_output --suffix corrected```
+
+```./Slicer --no-main-window --testing --python-script path_to_script path_to_test_segmentations path_to_series path_to_output --suffix standardized```
 
 where `path_to_script` is the path to `get_segmentations_as_nifti.py` script in the [FONDEF repository](https://github.com/covasquezv/FONDEF_ID23I10337/tree/dev/slicer), `path_to_subset_segmentations` is the path to the folder containing train-val or test annotations, `path_to_series` is the path to the `series.json` after DICOM downloading, and `path_to_output` is the path to the output folder. Note that you apply this script twice to have train and test sets in different folders.
 
@@ -239,8 +242,8 @@ Create the following folder structure by using the images and masks obtained in 
 	</code></pre>
 
 Some notes:
-- The files inside the `dicom` folder are the obtained in the `Images` subsection.
-- The files inside the `nifti` folder are the obtained in the `Masks` subsection.
+- The files inside the `dicom` folder are the obtained in the [Images](#images) subsection.
+- The files inside the `nifti` folder are the obtained in the [Masks](#masks) subsection.
 - The filenames of images, labels and masks are based on the DICOM tag “Series Instance UID” `(0020,000E)`. We ommitted that from the visual representation for simplicity.
 - The `recist_measurements.csv` file needs to be downloaded from [here](https://sasiba.uchile.cl/index.php/apps/files/?dir=/2023_Fondef_ID23I10337/2023_2024_Fondef_ID23I10337_go/2025_Paper/data/source&fileid=23966378)
 - Regarding metadata files:
@@ -248,18 +251,16 @@ Some notes:
 	- `series.json` was obtained in the `Images` subsection using the `get_data_from_orthanc.py` script.
 	- `windows_mapping.json` is obtained using the `create_windows_mapping.py` from the [FONDEF repository](https://github.com/covasquezv/FONDEF_ID23I10337/tree/dev/hcuch-data).
 
-#### Replace NIfTI CT images
-1. Convert DICOM files of CT series into compressed nifti files using the `convert_dicom_to_nifti.py` script.
-2. Replace the train and test `images` in the corresponding folders inside `nifti`. **Note:** This is required because for the rest of the community, the NIfTI files can only be obtained from the DICOM files.
-
 
 ### Steps to obtain the final data from raw data
 
-1. Run `get_3d_instance_annotated_lesions.py` script to convert `raw` annotated data to `final` annotated data, containing masks with individual lesion instances. See the help using the flag `-h` to
-understand the input arguments.
-2. Run the `get_final_metadata.py` script to get the final version of all metadata files.
-3. Copy the `raw/images/nifti/train/images` folder containing the CT series in nifti format to its corresponding location in the `final` folder (do this for the train and test subsets).
-4. Make sure to have the following folder structure:
+1. Run the `get_final_metadata.py` script to get the final version of all metadata files.
+2. Convert DICOM (`.dcm`) files of CT series into compressed NIfTI (`.nii.gz`) files using the `convert_dicom_to_nifti.py` script. Make sure to select the final versions of `series.json` and `patients.csv`.
+3. Replace the resulting train and test `images` in the corresponding folders inside the `raw`folder (`raw/images/nifti/train/images` for train, `raw/images/nifti/test/images` for test). **Note:** Steps 2 and 3 are required because for the rest of the community, the NIfTI files can only be obtained from the DICOM files.
+4. Run `get_3d_instance_annotated_lesions.py` script to convert `raw` annotated data to `final` annotated data, containing masks with individual lesion instances. See the help using the flag `-h` to
+understand the input arguments. **Note:** You have to run this script separately for the train and test sets.
+5. Copy the `raw/images/nifti/train/images` and `raw/images/nifti/test/images` folders containing the CT series in nifti format to their corresponding locations in the `final` folder.
+6. Make sure to have the following folder structure:
 	<pre><code>
 	📁 final
 	├── 📁 images
