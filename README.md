@@ -263,6 +263,7 @@ understand the input arguments. **Note:** You have to run this script separately
 	│   └── windows_mapping.json
 	└── recist_measurements.csv
 	</code></pre>
+7. Go to the [FONDEF repository](https://github.com/covasquezv/FONDEF_ID23I10337/tree/dev/hcuch-data) and use the script `filter_dicom_files.py` to select only the DICOM files of final patients. Then, copy the resulting data into the `raw/images/dicom/` folder.
 
 ### Compute statistics
 
