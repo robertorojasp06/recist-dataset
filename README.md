@@ -130,7 +130,7 @@ Each row represents a unique patient.
 | `subset`          | Integer     | Subset assigned to the patient (`training`, `test`)          | `training`     |
 | `first_study_date`| String      | Date of the first study (baseline) in the format `YYYYMMDD`  | `20190220`     |
 | `sex`             | String 	  | Biological sex of the patient (`M`, `F`)    			     | `F`            |
-| `age`             | Integer     | Age of the patient in years                                  | `57`           |
+| `age`             | Integer     | Age of the patient in years at the moment of the baseline study| `57`         |
 | `diagnosis`       | String      | Clinical diagnosis assigned to the patient                   | `lung cancer`  |
 | `histology`       | String      | Histological diagnosis of the patient, using standardized terms from the NCI Thesaurus (NCIt). If empty, it indicates missing or restricted information| `Adenocarcinoma`  |
 | `health_insurance`| String      | Health insurance coverage (`public`, `private`, `uninsured`) | `public` |
