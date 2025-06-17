@@ -13,12 +13,34 @@ from tqdm import tqdm
 from utils.diameters import DiameterMeasurer
 
 
+
+
 class LesionExtractor:
     def __init__(self) -> None:
         self.filename_extension = '.nii.gz'
         self.num_processes = 4
         self.verbose = True
         self.not_reported_value = "Not Reported"
+
+    def _get_masks_tcia_adrenal(self, path_to_masks):
+        paths_to_masks = [
+            item
+            for item in Path(path_to_masks).rglob(f"*{self.filename_extension}")
+            if "Segmentation" in item.parts[-2]
+        ]
+        seg_folders = list(set([
+            item.parts[-2]
+            for item in paths_to_masks
+        ]))
+        patients = set(list([
+            item.parts[-4]
+            for item in paths_to_masks
+        ]))
+        # Check one nifti mask per folder
+        assert len(paths_to_masks) == len(seg_folders), "Some Segmentation folders have more than one nifti mask."
+        # Check one nifti mask per case
+        assert len(paths_to_masks) == len(patients), "Some patients have more than one nifti mask."
+        return paths_to_masks
 
     def process_mask(self, sample: Dict):
         """Process each mask to extract lesions.
@@ -82,6 +104,9 @@ class LesionExtractor:
                              lesion_label_value):
         if dataset_name == "PET-CT":
             paths_to_masks = Path(path_to_masks).rglob(f"SEG{self.filename_extension}")
+        elif dataset_name == "Adrenal-ACC-Ki67":
+            paths_to_masks = self._get_masks_tcia_adrenal(path_to_masks)
+        # MSD cases
         else:
             paths_to_masks = Path(path_to_masks).glob(f"*{self.filename_extension}")
         samples = [
@@ -120,11 +145,12 @@ def main():
     parser = argparse.ArgumentParser(
         description="""Extract information of 3d lesion instances
         from the segmentation masks of the Medical Segmentation
-        Decathlon (MSD).""",
+        Decathlon (MSD) and other datasets.""",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     parser.add_argument(
-        'path_to_json',
+        '--path_to_json',
+        default="other_datasets.json",
         type=str,
         help="""Path to the JSON file that specify the datasets
         to be considered. The file structure is a list of dictionaries,
@@ -149,7 +175,8 @@ def main():
         "Task06_Lung",
         "Task07_Pancreas",
         "Task08_HepaticVessel",
-        "Task10_Colon"
+        "Task10_Colon",
+        "Adrenal-ACC-Ki67"
     ]
     args = parser.parse_args()
     with open(args.path_to_json, 'r') as file:
