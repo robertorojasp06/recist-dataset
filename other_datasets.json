@@ -48,5 +48,10 @@
         "dataset_name": "KiPA22",
         "path_to_masks": "/media/robber/Nuevo vol1/datasets/fondef-ID23I10337/kipa22/train/label",
         "lesion_label_value": 4
+    },
+    {
+        "dataset_name": "KiTS23",
+        "path_to_masks": "/media/robber/Nuevo vol1/datasets/fondef-ID23I10337/kits23",
+        "lesion_label_value": 2
     }
 ]

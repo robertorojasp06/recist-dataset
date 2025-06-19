@@ -90,6 +90,16 @@ class LesionExtractor:
         assert len(seg_folders) == len(patients), "Some patients have more than segmentation folder as expected in HCC-TACE-Seg dataset."
         return paths_to_masks
 
+    def _get_masks_kits23(self, path_to_masks):
+        paths_to_masks = list(Path(path_to_masks).rglob(f"segmentation{self.filename_extension}"))
+        patients = list(set([
+            item.parts[-2]
+            for item in paths_to_masks
+        ]))
+        # Check one segmentation mask per patient
+        assert len(paths_to_masks) == len(patients), "Some patients have more than one segmentation (or no segmentation) as expected in HCC-TACE-Seg dataset."
+        return paths_to_masks
+
     def process_mask(self, sample: Dict):
         """Process each mask to extract lesions.
 
@@ -137,6 +147,9 @@ class LesionExtractor:
             ]:
                 patient = Path(sample["path_to_mask"]).parts[-4]
                 study = Path(sample["path_to_mask"]).parts[-3]
+            elif sample["dataset_name"] == "KiTS23":
+                patient = Path(sample["path_to_mask"]).parts[-2]
+                study = self.not_reported_value
             else:
                 patient = self.not_reported_value
                 study = self.not_reported_value
@@ -163,6 +176,8 @@ class LesionExtractor:
             paths_to_masks = self._get_masks_tcia_glis(path_to_masks)
         elif dataset_name == "HCC-TACE-Seg":
             paths_to_masks = self._get_masks_tcia_hcc(path_to_masks)
+        elif dataset_name == "KiTS23":
+            paths_to_masks = self._get_masks_kits23(path_to_masks)
         # MSD, KiPA cases
         else:
             paths_to_masks = Path(path_to_masks).glob(f"*{self.filename_extension}")
@@ -236,7 +251,8 @@ def main():
         "Adrenal-ACC-Ki67",
         "GLIS-RT",
         "HCC-TACE-Seg",
-        "KiPA22"
+        "KiPA22",
+        "KiTS23"
     ]
     args = parser.parse_args()
     with open(args.path_to_json, 'r') as file:
