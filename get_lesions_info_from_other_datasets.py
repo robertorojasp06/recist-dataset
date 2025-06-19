@@ -13,8 +13,6 @@ from tqdm import tqdm
 from utils.diameters import DiameterMeasurer
 
 
-
-
 class LesionExtractor:
     def __init__(self) -> None:
         self.filename_extension = '.nii.gz'
@@ -53,6 +51,43 @@ class LesionExtractor:
         ]))
         # Check one nifti mask per patient
         assert len(paths_to_masks) == len(patients), "Some patients have more than one nifti mask in GLIST-RT dataset."
+        return paths_to_masks
+
+    def _get_masks_tcia_hcc(self, path_to_masks, tumor_label_value=2):
+        paths_to_masks = [
+            item
+            for item in Path(path_to_masks).rglob(f"*{self.filename_extension}")
+            if "Segmentation" in item.parts[-2]
+        ]
+        seg_folders = list(set([
+            item.parts[-2]
+            for item in paths_to_masks
+        ]))
+        paths_to_json = list(Path(path_to_masks).rglob('*.json'))
+        patients = list(set([
+            item.parts[-4]
+            for item in paths_to_masks
+        ]))
+        # Check JSON file with 'labelID' == 2 and 'SegmentDescription' == Tumor
+        assert len(paths_to_json) == len(seg_folders), "Some segmentation folders have more than one JSON file as expected HCC-TACE-Seg dataset."
+        for path in paths_to_json:
+            with open(path, 'r') as file:
+                metadata = json.load(file)
+            tumor_meta = [
+                value[0]
+                for value in metadata["segmentAttributes"]
+                if value[0]["SegmentDescription"] == "Tumor"
+            ]
+            assert len(tumor_meta) == 1, f"{path} does not have 'Tumor' in 'SegmentDescription' (or has more than one instace)."
+            assert tumor_meta[0]['labelID'] == tumor_label_value, f"{path} does not have 'labelID' equal to '2' as expected."
+        # Get the paths to tumor masks
+        paths_to_masks = [
+            item
+            for item in paths_to_masks
+            if int(item.name.split(self.filename_extension)[0].split('-')[1]) == tumor_label_value
+        ]
+        # Check one segmentation folder per patient
+        assert len(seg_folders) == len(patients), "Some patients have more than segmentation folder as expected in HCC-TACE-Seg dataset."
         return paths_to_masks
 
     def process_mask(self, sample: Dict):
@@ -97,7 +132,8 @@ class LesionExtractor:
                 study = Path(sample["path_to_mask"]).parts[-2]
             elif sample["dataset_name"] in [
                 "Adrenal-ACC-Ki67",
-                "GLIS-RT"
+                "GLIS-RT",
+                "HCC-TACE-Seg"
             ]:
                 patient = Path(sample["path_to_mask"]).parts[-4]
                 study = Path(sample["path_to_mask"]).parts[-3]
@@ -125,7 +161,9 @@ class LesionExtractor:
             paths_to_masks = self._get_masks_tcia_adrenal(path_to_masks)
         elif dataset_name == "GLIS-RT":
             paths_to_masks = self._get_masks_tcia_glis(path_to_masks)
-        # MSD cases
+        elif dataset_name == "HCC-TACE-Seg":
+            paths_to_masks = self._get_masks_tcia_hcc(path_to_masks)
+        # MSD, KiPA cases
         else:
             paths_to_masks = Path(path_to_masks).glob(f"*{self.filename_extension}")
         samples = [
@@ -196,7 +234,9 @@ def main():
         "Task08_HepaticVessel",
         "Task10_Colon",
         "Adrenal-ACC-Ki67",
-        "GLIS-RT"
+        "GLIS-RT",
+        "HCC-TACE-Seg",
+        "KiPA22"
     ]
     args = parser.parse_args()
     with open(args.path_to_json, 'r') as file:

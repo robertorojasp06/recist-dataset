@@ -38,5 +38,15 @@
         "dataset_name": "GLIS-RT",
         "path_to_masks": "/media/robber/Nuevo vol1/datasets/fondef-ID23I10337/tcia/GLIS-RT/manifest-1636603674498/conversion-to-nifti/nifti",
         "lesion_label_value": 1
+    },
+    {
+        "dataset_name": "HCC-TACE-Seg",
+        "path_to_masks": "/media/robber/Nuevo vol1/datasets/fondef-ID23I10337/tcia/HCC-TACE-Seg/manifest-1643035385102/conversion-to-nifti/nifti",
+        "lesion_label_value": 2
+    },
+    {
+        "dataset_name": "KiPA22",
+        "path_to_masks": "/media/robber/Nuevo vol1/datasets/fondef-ID23I10337/kipa22/train/label",
+        "lesion_label_value": 4
     }
 ]
