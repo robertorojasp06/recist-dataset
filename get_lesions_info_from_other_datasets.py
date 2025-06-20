@@ -104,6 +104,14 @@ class LesionExtractor:
         paths_to_masks = list(Path(path_to_masks).glob(f"*_seg{self.filename_extension}"))
         return paths_to_masks
 
+    def _get_masks_tcia_lymph(self, path_to_masks):
+        paths_to_masks = [
+            item
+            for item in Path(path_to_masks).rglob(f"*{self.filename_extension}")
+            if "segmentations" in item.parts[-2]
+        ]
+        return paths_to_masks
+
     def process_mask(self, sample: Dict):
         """Process each mask to extract lesions.
 
@@ -150,7 +158,8 @@ class LesionExtractor:
             elif sample["dataset_name"] in [
                 "Adrenal-ACC-Ki67",
                 "GLIS-RT",
-                "HCC-TACE-Seg"
+                "HCC-TACE-Seg",
+                "CT-Lymph-Nodes"
             ]:
                 patient = Path(sample["path_to_mask"]).parts[-4]
                 study = Path(sample["path_to_mask"]).parts[-3]
@@ -190,6 +199,8 @@ class LesionExtractor:
             paths_to_masks = self._get_masks_kits23(path_to_masks)
         elif dataset_name == "LNQ23":
             paths_to_masks = self._get_masks_lnq23(path_to_masks)
+        elif dataset_name == "CT-Lymph-Nodes":
+            paths_to_masks = self._get_masks_tcia_lymph(path_to_masks)
         # MSD, KiPA cases
         else:
             paths_to_masks = Path(path_to_masks).glob(f"*{self.filename_extension}")
@@ -265,7 +276,8 @@ def main():
         "HCC-TACE-Seg",
         "KiPA22",
         "KiTS23",
-        "LNQ23"
+        "LNQ23",
+        "CT-Lymph-Nodes"
     ]
     args = parser.parse_args()
     with open(args.path_to_json, 'r') as file:
