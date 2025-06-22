@@ -55,9 +55,9 @@
         "lesion_label_value": 2
     },
     {
-        "dataset_name": "LNQ23",
-        "path_to_masks": "/media/robber/Nuevo vol1/datasets/fondef-ID23I10337/lnq23/conversion-to-nifti/nifti",
-        "lesion_label_value": -1
+        "dataset_name": "Mediastinal-Lymph-Node-SEG",
+        "path_to_masks": "/media/robber/Nuevo vol1/datasets/fondef-ID23I10337/tcia/Mediastinal-Lymph-Node-SEG-DA-RAD/manifest-1724359862867/conversion-to-nifti/nifti",
+        "lesion_label_value": 1
     },
     {
         "dataset_name": "CT-Lymph-Nodes",

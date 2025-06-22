@@ -126,6 +126,14 @@ class LesionExtractor:
             assert meta["segmentAttributes"][0][0]["labelID"] == 1, f"{path} has 'labelID' different from one."
         return paths_to_masks
 
+    def _get_masks_tcia_mediastinal_lymph(self, path_to_masks):
+        paths_to_masks = [
+            item
+            for item in Path(path_to_masks).rglob(f"*{self.filename_extension}")
+            if "Annotated" in item.parts[-2]
+        ]
+        return paths_to_masks
+
     def process_mask(self, sample: Dict):
         """Process each mask to extract lesions.
 
@@ -174,7 +182,8 @@ class LesionExtractor:
                 "GLIS-RT",
                 "HCC-TACE-Seg",
                 "CT-Lymph-Nodes",
-                "NSCLC-Radiogenomics"
+                "NSCLC-Radiogenomics",
+                "Mediastinal-Lymph-Node-SEG"
             ]:
                 patient = Path(sample["path_to_mask"]).parts[-4]
                 study = Path(sample["path_to_mask"]).parts[-3]
@@ -218,6 +227,8 @@ class LesionExtractor:
             paths_to_masks = self._get_masks_tcia_lymph(path_to_masks)
         elif dataset_name == "NSCLC-Radiogenomics":
             paths_to_masks = self._get_masks_tcia_nsclc(path_to_masks)
+        elif dataset_name == "Mediastinal-Lymph-Node-SEG":
+            paths_to_masks = self._get_masks_tcia_mediastinal_lymph(path_to_masks)
         # MSD, KiPA cases
         else:
             paths_to_masks = Path(path_to_masks).glob(f"*{self.filename_extension}")
@@ -293,7 +304,7 @@ def main():
         "HCC-TACE-Seg",
         "KiPA22",
         "KiTS23",
-        "LNQ23",
+        "Mediastinal-Lymph-Node-SEG",
         "CT-Lymph-Nodes",
         "NSCLC-Radiogenomics"
     ]
