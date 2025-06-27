@@ -57,7 +57,9 @@ class Processor:
                     "std_HU": np.std(ct_values),
                     "major_axis": lesion_diameters["major_axis"],
                     "minor_axis": lesion_diameters["minor_axis"],
-                    "major_axis_slice_idx": lesion_diameters["major_axis_slice_idx"]
+                    "major_axis_slice_idx": lesion_diameters["major_axis_slice_idx"],
+                    "method": lesion_diameters["method"],
+                    "unconnected_strategy": lesion_diameters["unconnected_strategy"]
                 }
             )
         return lesions_features

@@ -1,8 +1,9 @@
 import numpy as np
 import SimpleITK as sitk
+import cv2
 from skimage.measure import label as label_objects
 from skimage.measure import regionprops
-from typing import Tuple
+from typing import Tuple, Literal
 from pathlib import Path
 
 
@@ -14,10 +15,23 @@ class DiameterMeasurer:
     spacing : tuple
         Voxel size in the following order: slices, rows, columns.
     """
-    def __init__(self, spacing: Tuple[float, float, float]):
+    def __init__(self, spacing: Tuple[float, float, float],
+                 method: Literal['ellipse', 'obb'] = 'obb',
+                 unconnected_strategy: Literal['sum', 'join', 'largest-area', 'largest-measurement'] = 'join'):
         self.spacing = spacing
+        self.method = method
+        self.unconnected_strategy = unconnected_strategy
 
-    def compute_diameters(self, mask, lesion):
+    def _get_major_axis_obb(self, contour):
+        _, (width, height), _ = cv2.minAreaRect(contour)
+        return max(width, height)
+
+    def _get_minor_axis_obb(self, contour):
+        _, (width, height), _ = cv2.minAreaRect(contour)
+        return min(width, height)
+
+    def compute_diameters(self, mask, lesion,
+                          return_figure_params=False):
         """Compute diameters of a lesion in the specified mask.
 
         Parameters
@@ -29,28 +43,68 @@ class DiameterMeasurer:
             Lesion object obtained using 'skimage.measures.regionprops'
         """
         unique_slices = np.unique(lesion.coords[:, 0]).tolist()
-        grouped_max_diameters = {str(idx): [] for idx in unique_slices}
-        grouped_min_diameters = {str(idx): [] for idx in unique_slices}
-        # Regions props in 2d
-        for slice_idx in unique_slices:
-            slice_mask = (mask[slice_idx] == lesion.label)
-            labeled = label_objects(slice_mask)
-            objects = regionprops(
-                labeled,
-                spacing=(self.spacing[1], self.spacing[2])
-            )
-            for object_ in objects:
-                grouped_max_diameters[str(slice_idx)].append(object_.axis_major_length)
-                grouped_min_diameters[str(slice_idx)].append(object_.axis_minor_length)
-        # Compute the sum of diameters (in case of more than 1 object for slice)
-        grouped_max_diameters = {
-            key: np.sum(value)
-            for key, value in grouped_max_diameters.items()
-        }
-        grouped_min_diameters = {
-            key: np.sum(value)
-            for key, value in grouped_min_diameters.items()
-        }
+        grouped_max_diameters = {}
+        grouped_min_diameters = {}
+        if self.method == 'ellipse':
+            # Regions props in 2d
+            for slice_idx in unique_slices:
+                slice_mask = (mask[slice_idx] == lesion.label)
+                labeled = label_objects(slice_mask)
+                objects = regionprops(
+                    labeled,
+                    spacing=(self.spacing[1], self.spacing[2])
+                )
+                # Deal with one more than one object
+                if self.unconnected_strategy == 'largest-area':
+                    largest_object = max(objects, key=lambda x: x.area)
+                    major_length = largest_object.axis_major_length
+                    minor_length = largest_object.axis_minor_length
+                elif self.unconnected_strategy == 'largest-measurement':
+                    largest_object = max(objects, key=lambda x: x.axis_major_length)
+                    major_length = largest_object.axis_major_length
+                    minor_length = largest_object.axis_minor_length
+                elif self.unconnected_strategy == 'sum':
+                    major_length = sum([object_.axis_major_length for object_ in objects])
+                    minor_length = sum([object_.axis_minor_length for object_ in objects])
+                else:
+                    raise ValueError(f"unconnected_strategy set to '{self.unconnected_strategy}' is not accepted for 'ellipse' method.")
+                grouped_max_diameters.update({str(slice_idx): major_length})
+                grouped_min_diameters.update({str(slice_idx): minor_length})
+        elif self.method == 'obb':
+            # OpenCV contours
+            for slice_idx in unique_slices:
+                slice_mask = (mask[slice_idx] == lesion.label).astype('uint8') * 255
+                contours, _ = cv2.findContours(
+                    slice_mask,
+                    cv2.RETR_EXTERNAL,
+                    cv2.CHAIN_APPROX_SIMPLE
+                )
+                contours = [item for item in contours if len(item) > 1]
+                if not contours:
+                    continue
+                # Deal with one more than one contour
+                if self.unconnected_strategy == 'join':
+                    joined_countours = np.vstack(contours).squeeze()
+                    _, (width, height), _ = cv2.minAreaRect(joined_countours)
+                    major_length = max(width, height) * self.spacing[1]
+                    minor_length = min(width, height) * self.spacing[1]
+                elif self.unconnected_strategy == 'largest-area':
+                    largest_contour = max(contours, key=cv2.contourArea)
+                    _, (width, height), _ = cv2.minAreaRect(largest_contour)
+                    major_length = max(width, height) * self.spacing[1]
+                    minor_length = min(width, height) * self.spacing[1]
+                elif self.unconnected_strategy == 'largest-measurement':
+                    largest_contour = max(contours, key=lambda x: self._get_major_axis_obb(x))
+                    _, (width, height), _ = cv2.minAreaRect(largest_contour)
+                    major_length = max(width, height) * self.spacing[1]
+                    minor_length = min(width, height) * self.spacing[1]
+                elif self.unconnected_strategy == 'sum':
+                    major_length = sum([self._get_major_axis_obb(contour) for contour in contours])
+                    minor_length = sum([self._get_minor_axis_obb(contour) for contour in contours])
+                else:
+                    raise ValueError(f"{self.unconnected_strategy} is not accepted for parameter 'unconnected_strategy'.")
+                grouped_max_diameters.update({str(slice_idx): major_length})
+                grouped_min_diameters.update({str(slice_idx): minor_length})
         # Get the major axis of all lesion slices
         major_axis_slice_idx = max(grouped_max_diameters, key=grouped_max_diameters.get)
         major_axis = grouped_max_diameters[major_axis_slice_idx]
@@ -60,8 +114,14 @@ class DiameterMeasurer:
             "label_value": lesion.label,
             "major_axis": major_axis,
             "minor_axis": minor_axis,
-            "major_axis_slice_idx": int(major_axis_slice_idx)
+            "major_axis_slice_idx": int(major_axis_slice_idx),
+            "method": self.method,
+            "unconnected_strategy": self.unconnected_strategy
         }
+        # Return parameters of estimated figures if specified
+        if return_figure_params:
+            #TODO
+            pass
         return output
 
 
