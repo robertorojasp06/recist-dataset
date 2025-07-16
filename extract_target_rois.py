@@ -233,7 +233,8 @@ class ROIExtractor:
         fig.savefig(
             str(path_to_output_file),
             dpi=300,
-            bbox_inches='tight'
+            bbox_inches='tight',
+            pad_inches=0
         )
         plt.close(fig)
 
