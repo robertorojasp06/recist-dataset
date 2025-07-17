@@ -37,14 +37,14 @@ def get_targets(path_to_recist_measurements, path_to_train_features,
 
 class ROIExtractor:
     def __init__(self):
-        self.roi_shape = (100, 100)
+        self.roi_shape = (110, 110)
         self.contour_thickness = 1
         self.contour_color = (0, 0, 1.0)
         self.fitted_figure_color = (0, 1.0, 0)
         self.major_axis_color = (1.0, 0.4, 0)
         self.minor_axis_color = (1.0, 0, 1.0)
-        self.text_position = (0.1, 0.85) # (x, y) 0 -> min, 1 -> max
-        self.text_fontsize = 30
+        self.text_position = (0.2, 0.84) # (x, y) 0 -> min, 1 -> max
+        self.text_fontsize = 24
         self.text_fontweight = 'bold'
         self.add_fitted_figures = False
         self.figsize = (5,5)
@@ -55,6 +55,7 @@ class ROIExtractor:
         self.add_legend = False
         self.add_axes_length_text = False
         self.add_lesion_alias_text = True
+        self.alias_visible = False
 
     def _plot_lesion(self, ct_slice, mask_slice, lesion_diameters,
                      fitted_figures, path_to_output_file, spacing_mm=None):
@@ -210,7 +211,7 @@ class ROIExtractor:
             text = ax.text(
                 self.text_position[0],
                 self.text_position[1],
-                f"{lesion_name}: {diameter_length:.2f} mm",
+                f"{lesion_name}: {diameter_length:.2f} mm" if self.alias_visible else f"{diameter_length:.2f} mm",
                 color=text_color,
                 fontsize=self.text_fontsize,
                 fontweight=self.text_fontweight,
