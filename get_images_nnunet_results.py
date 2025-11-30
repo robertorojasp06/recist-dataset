@@ -1,3 +1,8 @@
+import os
+os.environ["VTK_HEADLESS"] = "1"
+os.environ["DISPLAY"] = ""
+os.environ["PYOPENGL_PLATFORM"] = "osmesa"
+
 import numpy as np
 import SimpleITK as sitk
 import matplotlib.pyplot as plt
