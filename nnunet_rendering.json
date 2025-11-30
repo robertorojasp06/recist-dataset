@@ -5,7 +5,7 @@
         "vol_mesh_bbox_xmax_delta": 10,
         "vol_mesh_bbox_zmin_delta": 10,
         "vol_mesh_bbox_zmax_delta": 0,
-        "slice_idx": 72,
+        "slice_idx": 145,
         "fill_predicted_mask": true,
         "slice_dilation_iters": 1
     },
@@ -42,7 +42,7 @@
         "vol_mesh_bbox_zmax_delta": 0,
         "vol_mesh_isosurface_value": 195,
         "interactive": false,
-        "slice_idx": 75,
+        "slice_idx": 140,
         "fill_predicted_mask": true,
         "slice_dilation_iters": 1
     },
