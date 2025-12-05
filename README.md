@@ -1,5 +1,5 @@
 # recist-dataset
-Description of a dataset for RECIST protocol.
+Description of a CT dataset containing 1,246 manually segmented lesions (tumors and lymph nodes), along with RECIST-compliant measurements for 82 target lesions.
 
 <figure>
   <img src="assets/data_examples.png" alt="Data examples" style="max-width:100%; height:auto;">
@@ -17,87 +17,25 @@ Description of a dataset for RECIST protocol.
 </figure>
 
 
-## How to get started?
+## Index
 For the community:
+- [Download the dataset](#download-the-dataset)
+- [Variables description](#variable-descriptions)
 - [Set up the repository](#set-up-the-repository)
-- [Prepare the Dataset from TCIA](#preparing-the-dataset-from-tcia)
-- [Variable descriptions](#variable-descriptions)
+- [Normalize CT images](#normalize-ct-images)
+- [Compute statistics](#compute-statistics)
 
 For the contributors/maintainers:
 - [How to get raw data](#how-to-get-raw-data)
 - [How to obtain the final data from raw data](#how-to-obtain-the-final-data-from-raw-data)
 - [Compute statistics](#compute-statistics)
 - [Obtain sample images](#obtain-sample-images)
+- [Obtain final dataset formatted to Zenodo](#obtain-final-dataset-formatted-to-zenodo)
 - [Additional scripts](#additional-scripts)
 
-## Set up the repository
-1. Clone the repository and install the conda environment running `conda env create -f environment.yml`.
-2. Run `conda activate recist-dataset`
+## Download the dataset
+The dataset is available on Zenodo ([https://doi.org/10.5281/zenodo.17788162](https://doi.org/10.5281/zenodo.17788162)) under a Creative Commons Attribution 4.0 International (CC BY 4.0) license. Download the files and extract the content from the `final-formatted.zip` file.
 
-## Preparing the Dataset from TCIA
-1. Download the dataset from [this link](TODO), which contains the following resources:
-	- **Segmentation Data (`SEG`):** This folder includes segmentation masks in NIfTI format and corresponding JSON files with the mapping between foreground values and label descriptions for each annotated lesion. The data is split into training and testing sets with the following structure:
-		<pre><code>
-		📁 SEG
-		├── 📁 train
-		│   ├── 📁 labels
-		│   │   ├── 1.3.12.2.1107.5.1.4.83504.30000019041511214045100000719.json
-		│   │   ├── 1.3.12.2.1107.5.1.4.83504.30000019070312170000200010324.json
-		│   │   └── ...
-		│   └── 📁 masks
-		│       ├── 1.3.12.2.1107.5.1.4.83504.30000019041511214045100000719.nii.gz
-		│       ├── 1.3.12.2.1107.5.1.4.83504.30000019070312170000200010324.nii.gz
-		│       └── ...
-		└── 📁 test
-			├── 📁 labels
-			│   ├── 1.3.12.2.1107.5.1.4.83504.30000017121507082014000029608.json
-			│   ├── 1.3.12.2.1107.5.1.4.83504.30000020011313523232500004258.json
-			│   └── ...
-			└── 📁 masks
-				├── 1.3.12.2.1107.5.1.4.83504.30000017121507082014000029608.nii.gz
-				├── 1.3.12.2.1107.5.1.4.83504.30000020011313523232500004258.nii.gz
-				└── ...
-		</code></pre>
-	- **CT Imaging Data(`CT`):** The imaging data consists of volumetric CT series with instances in DICOM format. The folder structure is organized in terms of patients, studies, series, and dicom instances as follows:
-		<pre><code>
-		📁 CT
-		├── 📁 1
-		|   ├── 3187796/
-		|	│   ├── 📁 Portal   5.0  I30f  1   iMAR/
-		|	│   │   ├── CT000000.dcm
-		|	│   │   ├── CT000001.dcm
-		|	│   │   └── ...
-		|	│   └── ...
-		|	└── ...
-		├── 📁 2
-		|   ├── 3051489/
-		|	│   ├── 📁 Torax Cte  1.5  I70f  2/
-		|	│   │   ├── CT000000.dcm
-		|	│   │   ├── CT000001.dcm
-		|	│   │   └── ...
-		|	│   └── ...
-		|	└── ...
-		└── ...
-		</code></pre>
-	- `recist_measurements.csv`: Contains target lesion measurements following RECIST 1.1, including the corresponding foreground value in the segmentation mask.
-	- `patients.csv`: Demographic and clinical data for each patient.
-	- `series.json`: Metadata for each CT series, including DICOM tags and image dimensions.
-	- `windows_mapping.json`: Maps CT series filenames to their associated window name (e.g., lung, abdomen, mediastinum). The actual window parameters are defined in `utils/windowing.py`. Use the script `normalize_ct_images.py` to apply window normalization to CT NIfTI files.
-
-2. Convert DICOM files into NIfTI using the script `convert_dicom_to_nifti.py`. We suggest to build the following folder structure from the resulting files:
-	<pre><code>
-	📁 CT-nifti
-	├── 📁 train
-	│   └── 📁 images
-	│       ├── 1.3.12.2.1107.5.1.4.83504.30000019041511214045100000719.json
-	│       ├── 1.3.12.2.1107.5.1.4.83504.30000019070312170000200010324.json
-	│       └── ...
-	└── 📁 test
-		└── 📁 images
-		    ├── 1.3.12.2.1107.5.1.4.83504.30000017121507082014000029608.json
-		    ├── 1.3.12.2.1107.5.1.4.83504.30000020011313523232500004258.json
-		    └── ...
-	</code></pre> 
 
 ## Variable Descriptions
 
@@ -153,6 +91,25 @@ List of dictionaries, where each dictionary corresponds to a CT series.
 | `slices`          | Integer     | Number of slices in the volume							     | `340`          |
 | `rows`            | Integer     | Number of rows per slice         					         | `512`          |
 | `columns`         | Integer     | Number of columns per slice         						 | `512`          |
+
+
+### Set up the repository
+Set up the repository to run the provided scripts. For that:
+1. Clone the repository and install the conda environment running `conda env create -f environment.yml`.
+2. Run `conda activate recist-dataset`
+
+**Note:** All the scripts have the `--help` flag available.
+
+### Normalize CT images
+Run the script `normalize_ct_images.py` to apply windowing-normalization to the CT images. The `windows_mapping.json` file is provided to properly normalize each CT image in the dataset.
+
+
+### Compute statistics
+
+Run the other scripts that compute statistics from the final dataset:
+	- `get_nifti_metadata.py`: get information about image shape and voxel resolution.
+	- `get_intensity_distributions.py`: get statistics from voxel intensities.
+	- `compute_lesions_features.py`: get some features from individual lesion instances (longest axis, shortest axis, volume, mean intensity in HU).
 
 
 ## Only for contributors
@@ -288,9 +245,12 @@ obtained from the MedSAM prediction.
 used for automatic liver and lung tumor segmentation using the nnUNet. The
 expert annotated and the predicted masks are also rendered.
 
+
+### Obtain final dataset formatted to Zenodo
+A final step is required to produce the dataset in the format requested by the Editor and Reviewers. To generate the `final-formatted` dataset folder, run the script `format_final_folder.py`.
+
+
 ### Additional scripts
 
 - `get_lesions_info_from_other_datasets.py`: extract information of the
 lesion instances included in the datasets that were used to train MedSAM.
-- `normalize_ct_images.py`: apply windowing-normalization to CT images. The `windows_mapping.json`
-file is provided to properly normalize each CT image in the final dataset.
